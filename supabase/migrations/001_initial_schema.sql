@@ -2,7 +2,7 @@
 -- Created: 2026-04-21
 
 -- Projects table
-CREATE TABLE projects (
+CREATE TABLE ops_projects (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   name text NOT NULL,
   category text NOT NULL CHECK (category IN ('FOUNDATION', 'LEVERAGE', 'EXPRESSION')),
@@ -14,9 +14,9 @@ CREATE TABLE projects (
 );
 
 -- Tasks table
-CREATE TABLE tasks (
+CREATE TABLE ops_tasks (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  project_id uuid REFERENCES projects(id) ON DELETE CASCADE,
+  project_id uuid REFERENCES ops_projects(id) ON DELETE CASCADE,
   title text NOT NULL,
   description text,
   status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'dropped', 'rescheduled')),
@@ -28,7 +28,7 @@ CREATE TABLE tasks (
 );
 
 -- Daily check-ins table
-CREATE TABLE daily_checkins (
+CREATE TABLE ops_checkins (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   date date NOT NULL UNIQUE,
   energy_level int NOT NULL CHECK (energy_level BETWEEN 1 AND 10),
@@ -42,10 +42,10 @@ CREATE TABLE daily_checkins (
 );
 
 -- Daily logs table
-CREATE TABLE daily_logs (
+CREATE TABLE ops_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   date date NOT NULL UNIQUE,
-  checkin_id uuid REFERENCES daily_checkins(id),
+  checkin_id uuid REFERENCES ops_checkins(id),
   tasks_completed uuid[],
   tasks_attempted uuid[],
   blockers text,
@@ -56,10 +56,10 @@ CREATE TABLE daily_logs (
 );
 
 -- Weekly reviews table
-CREATE TABLE weekly_reviews (
+CREATE TABLE ops_reviews (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   week_start date NOT NULL UNIQUE,
-  primary_project_id uuid REFERENCES projects(id),
+  primary_project_id uuid REFERENCES ops_projects(id),
   secondary_project_ids uuid[],
   what_completed text,
   what_failed text,
@@ -73,18 +73,18 @@ CREATE TABLE weekly_reviews (
 );
 
 -- Patterns table
-CREATE TABLE patterns (
+CREATE TABLE ops_patterns (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   detected_at timestamptz DEFAULT now(),
   pattern_type text NOT NULL,
   description text NOT NULL,
-  affected_project_id uuid REFERENCES projects(id),
+  affected_project_id uuid REFERENCES ops_projects(id),
   suggestion text,
   acknowledged boolean DEFAULT false
 );
 
 -- Seed projects
-INSERT INTO projects (name, category, description, priority) VALUES
+INSERT INTO ops_projects (name, category, description, priority) VALUES
   ('Water Systems', 'FOUNDATION', 'Sump, river pump, irrigation infrastructure', 1),
   ('Olive Tree Rehabilitation', 'FOUNDATION', 'Block-based olive tree restoration across ~16,000 trees', 2),
   ('Garden Systems', 'FOUNDATION', 'Compost, greenhouse, soil health', 3),

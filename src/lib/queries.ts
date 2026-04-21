@@ -13,7 +13,7 @@ export function useProjects() {
     queryKey: ['projects'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('projects')
+        .from('ops_projects')
         .select('*')
         .order('priority', { ascending: true })
       if (error) throw error
@@ -27,7 +27,7 @@ export function useProject(id: string) {
     queryKey: ['projects', id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('projects')
+        .from('ops_projects')
         .select('*')
         .eq('id', id)
         .single()
@@ -43,7 +43,7 @@ export function useUpdateProject() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Project> & { id: string }) => {
       const { data, error } = await supabase
-        .from('projects')
+        .from('ops_projects')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
@@ -63,7 +63,7 @@ export function useTasks(projectId?: string) {
   return useQuery({
     queryKey: ['tasks', projectId],
     queryFn: async () => {
-      let q = supabase.from('tasks').select('*').order('created_at', { ascending: true })
+      let q = supabase.from('ops_tasks').select('*').order('created_at', { ascending: true })
       if (projectId) q = q.eq('project_id', projectId)
       const { data, error } = await q
       if (error) throw error
@@ -80,7 +80,7 @@ export function useThisWeekTasks() {
     queryKey: ['tasks', 'week', startStr],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('tasks')
+        .from('ops_tasks')
         .select('*')
         .gte('scheduled_date', startStr)
         .lte('scheduled_date', endStr)
@@ -96,7 +96,7 @@ export function useCreateTask() {
   return useMutation({
     mutationFn: async (task: Omit<Task, 'id' | 'created_at'>) => {
       const { data, error } = await supabase
-        .from('tasks')
+        .from('ops_tasks')
         .insert(task)
         .select()
         .single()
@@ -114,7 +114,7 @@ export function useUpdateTask() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Task> & { id: string }) => {
       const { data, error } = await supabase
-        .from('tasks')
+        .from('ops_tasks')
         .update(updates)
         .eq('id', id)
         .select()
@@ -132,7 +132,7 @@ export function useDeleteTask() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('tasks').delete().eq('id', id)
+      const { error } = await supabase.from('ops_tasks').delete().eq('id', id)
       if (error) throw error
     },
     onSuccess: () => {
@@ -148,7 +148,7 @@ export function useDailyCheckins(limit = 7) {
     queryKey: ['daily_checkins', limit],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('daily_checkins')
+        .from('ops_checkins')
         .select('*')
         .order('date', { ascending: false })
         .limit(limit)
@@ -165,7 +165,7 @@ export function useDailyLogs(limit = 7) {
     queryKey: ['daily_logs', limit],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('daily_logs')
+        .from('ops_logs')
         .select('*')
         .order('date', { ascending: false })
         .limit(limit)
@@ -183,7 +183,7 @@ export function useThisWeekLogs() {
     queryKey: ['daily_logs', 'week', startStr],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('daily_logs')
+        .from('ops_logs')
         .select('*')
         .gte('date', startStr)
         .lte('date', endStr)
@@ -199,7 +199,7 @@ export function useCreateDailyLog() {
   return useMutation({
     mutationFn: async (log: Omit<DailyLog, 'id' | 'created_at'>) => {
       const { data, error } = await supabase
-        .from('daily_logs')
+        .from('ops_logs')
         .insert(log)
         .select()
         .single()
@@ -219,7 +219,7 @@ export function useWeeklyReviews() {
     queryKey: ['weekly_reviews'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('weekly_reviews')
+        .from('ops_reviews')
         .select('*')
         .order('week_start', { ascending: false })
       if (error) throw error
@@ -234,7 +234,7 @@ export function useCurrentWeekReview() {
     queryKey: ['weekly_reviews', weekStart],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('weekly_reviews')
+        .from('ops_reviews')
         .select('*')
         .eq('week_start', weekStart)
         .maybeSingle()
@@ -249,7 +249,7 @@ export function useCreateWeeklyReview() {
   return useMutation({
     mutationFn: async (review: Omit<WeeklyReview, 'id' | 'created_at'>) => {
       const { data, error } = await supabase
-        .from('weekly_reviews')
+        .from('ops_reviews')
         .insert(review)
         .select()
         .single()
@@ -267,7 +267,7 @@ export function useUpdateWeeklyReview() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<WeeklyReview> & { id: string }) => {
       const { data, error } = await supabase
-        .from('weekly_reviews')
+        .from('ops_reviews')
         .update(updates)
         .eq('id', id)
         .select()
@@ -288,7 +288,7 @@ export function usePatterns(onlyUnacknowledged = false) {
     queryKey: ['patterns', onlyUnacknowledged],
     queryFn: async () => {
       let q = supabase
-        .from('patterns')
+        .from('ops_patterns')
         .select('*')
         .order('detected_at', { ascending: false })
       if (onlyUnacknowledged) q = q.eq('acknowledged', false)
@@ -304,7 +304,7 @@ export function useAcknowledgePattern() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('patterns')
+        .from('ops_patterns')
         .update({ acknowledged: true })
         .eq('id', id)
       if (error) throw error
