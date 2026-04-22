@@ -48,56 +48,56 @@ export function getWeekDates(weekStart?: Date): Date[] {
 
 export function categoryColor(category: Category): string {
   switch (category) {
-    case 'FOUNDATION': return 'text-green-400'
-    case 'LEVERAGE': return 'text-blue-400'
-    case 'EXPRESSION': return 'text-amber-400'
+    case 'FOUNDATION': return 'text-[#5c7a5c]'
+    case 'LEVERAGE': return 'text-[#4a6b8a]'
+    case 'EXPRESSION': return 'text-[#8a6a3a]'
   }
 }
 
 export function categoryBg(category: Category): string {
   switch (category) {
-    case 'FOUNDATION': return 'bg-green-400/10 border-green-400/20'
-    case 'LEVERAGE': return 'bg-blue-400/10 border-blue-400/20'
-    case 'EXPRESSION': return 'bg-amber-400/10 border-amber-400/20'
+    case 'FOUNDATION': return 'bg-[rgba(92,122,92,0.08)] border-[rgba(92,122,92,0.2)]'
+    case 'LEVERAGE': return 'bg-[rgba(74,107,138,0.08)] border-[rgba(74,107,138,0.2)]'
+    case 'EXPRESSION': return 'bg-[rgba(138,106,58,0.08)] border-[rgba(138,106,58,0.2)]'
   }
 }
 
 export function categoryBadge(category: Category): string {
   switch (category) {
-    case 'FOUNDATION': return 'bg-green-400/20 text-green-400'
-    case 'LEVERAGE': return 'bg-blue-400/20 text-blue-400'
-    case 'EXPRESSION': return 'bg-amber-400/20 text-amber-400'
+    case 'FOUNDATION': return 'bg-[rgba(92,122,92,0.12)] text-[#5c7a5c]'
+    case 'LEVERAGE': return 'bg-[rgba(74,107,138,0.12)] text-[#4a6b8a]'
+    case 'EXPRESSION': return 'bg-[rgba(138,106,58,0.12)] text-[#8a6a3a]'
   }
 }
 
 export function categoryAccent(category: Category): string {
   switch (category) {
-    case 'FOUNDATION': return '#4ade80'
-    case 'LEVERAGE': return '#60a5fa'
-    case 'EXPRESSION': return '#f59e0b'
+    case 'FOUNDATION': return '#5c7a5c'
+    case 'LEVERAGE': return '#4a6b8a'
+    case 'EXPRESSION': return '#8a6a3a'
   }
 }
 
 export function statusBadge(status: string): string {
   switch (status) {
-    case 'active': return 'bg-green-400/20 text-green-400'
-    case 'paused': return 'bg-yellow-400/20 text-yellow-400'
-    case 'completed': return 'bg-slate-400/20 text-slate-400'
-    case 'pending': return 'bg-slate-400/20 text-slate-400'
-    case 'in_progress': return 'bg-blue-400/20 text-blue-400'
-    case 'dropped': return 'bg-red-400/20 text-red-400'
-    case 'rescheduled': return 'bg-purple-400/20 text-purple-400'
-    default: return 'bg-slate-400/20 text-slate-400'
+    case 'active': return 'bg-[rgba(92,122,92,0.12)] text-[#5c7a5c]'
+    case 'paused': return 'bg-[rgba(138,106,58,0.12)] text-[#8a6a3a]'
+    case 'completed': return 'bg-[rgba(139,127,109,0.12)] text-[#8a7f6d]'
+    case 'pending': return 'bg-[rgba(139,127,109,0.1)] text-[#8a7f6d]'
+    case 'in_progress': return 'bg-[rgba(74,107,138,0.12)] text-[#4a6b8a]'
+    case 'dropped': return 'bg-[rgba(180,80,80,0.1)] text-[#a05050]'
+    case 'rescheduled': return 'bg-[rgba(138,90,138,0.1)] text-[#7a5a7a]'
+    default: return 'bg-[rgba(139,127,109,0.1)] text-[#8a7f6d]'
   }
 }
 
 export function priorityBadge(priority: string): string {
   switch (priority) {
-    case 'critical': return 'bg-red-500/20 text-red-400'
-    case 'high': return 'bg-orange-400/20 text-orange-400'
-    case 'normal': return 'bg-slate-400/20 text-slate-400'
-    case 'low': return 'bg-slate-600/20 text-slate-500'
-    default: return 'bg-slate-400/20 text-slate-400'
+    case 'critical': return 'bg-[rgba(180,60,60,0.12)] text-[#a04040]'
+    case 'high': return 'bg-[rgba(180,100,40,0.12)] text-[#8a5a30]'
+    case 'normal': return 'bg-[rgba(139,127,109,0.1)] text-[#8a7f6d]'
+    case 'low': return 'bg-[rgba(139,127,109,0.07)] text-[#aaa090]'
+    default: return 'bg-[rgba(139,127,109,0.1)] text-[#8a7f6d]'
   }
 }
 

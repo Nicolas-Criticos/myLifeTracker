@@ -1,11 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --animate-breath: samsaraBreath 18s ease-in-out infinite;
+  --animate-pulse-soft: softPulse 6s ease-in-out infinite;
+}
+
+@keyframes samsaraBreath {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+
+@keyframes softPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 :root {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 16px;
-  line-height: 1.5;
-  color: #f1f5f9;
-  background-color: #0f1117;
+  line-height: 1.6;
+
+  /* Samsara palette — warm organic earth */
+  --bg-base:        #f6f3ee;
+  --bg-surface:     #f0ece4;
+  --bg-raised:      #ece7de;
+  --border:         rgba(139, 127, 109, 0.2);
+  --border-strong:  rgba(139, 127, 109, 0.4);
+
+  --text-primary:   #2b2b2b;
+  --text-muted:     #8a7f6d;
+  --text-faint:     rgba(43, 43, 43, 0.4);
+
+  /* Category accents — earthy, warm */
+  --foundation:     #5c7a5c;   /* forest green */
+  --leverage:       #4a6b8a;   /* slate blue */
+  --expression:     #8a6a3a;   /* warm amber/oak */
+
+  color: var(--text-primary);
+  background-color: var(--bg-base);
 }
 
 * {
@@ -19,22 +58,26 @@ html, body, #root {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #0f1117;
-}
-::-webkit-scrollbar-thumb {
-  background: #2a2d3a;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3a3d4a;
-}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139, 127, 109, 0.25); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(139, 127, 109, 0.45); }
 
 /* Selection */
-::selection {
-  background: #4ade80/30;
-  color: #f1f5f9;
+::selection { background: rgba(92, 122, 92, 0.2); color: var(--text-primary); }
+
+/* Fade-in animation utility */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+/* Portal radial gradient background — centered circle feel */
+.samsara-bg {
+  background: radial-gradient(
+    circle at center,
+    rgba(240, 235, 220, 1) 0%,
+    rgba(245, 242, 234, 0.98) 30%,
+    rgba(244, 240, 230, 0.96) 60%,
+    rgba(242, 237, 226, 0.94) 100%
+  );
 }

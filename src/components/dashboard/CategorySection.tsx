@@ -34,7 +34,7 @@ export default function CategorySection({
       </div>
       <div className="space-y-2">
         {cats.length === 0 ? (
-          <p className="text-[#64748b] text-sm">No projects</p>
+          <p className="text-[#8a7f6d] text-sm">No projects</p>
         ) : (
           cats.map(project => (
             <ProjectCard

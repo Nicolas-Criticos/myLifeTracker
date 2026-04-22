@@ -2,22 +2,25 @@ import { NavLink } from 'react-router-dom'
 import { cn } from '../../lib/utils'
 
 const nav = [
-  { to: '/', label: 'Dashboard', icon: '⬡' },
+  { to: '/', label: 'Dashboard', icon: '◎' },
   { to: '/projects', label: 'Projects', icon: '◈' },
   { to: '/reviews', label: 'Reviews', icon: '◉' },
-  { to: '/insights', label: 'Insights', icon: '◎' },
+  { to: '/insights', label: 'Insights', icon: '⬡' },
 ]
 
 export default function Sidebar() {
   return (
-    <aside className="w-56 min-h-screen bg-[#1a1d27] border-r border-[#2a2d3a] flex flex-col shrink-0">
+    <aside className="w-52 min-h-screen bg-[#f0ece4] border-r border-[rgba(139,127,109,0.18)] flex flex-col shrink-0">
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-[#2a2d3a]">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-[#4ade80]" />
-          <span className="text-[#f1f5f9] font-semibold text-sm tracking-wide">myLifeTracker</span>
+      <div className="px-6 py-6 border-b border-[rgba(139,127,109,0.15)]">
+        <div className="flex items-center gap-2.5 mb-1">
+          {/* Centered circle motif */}
+          <div className="w-5 h-5 rounded-full border border-[rgba(92,122,92,0.5)] flex items-center justify-center">
+            <div className="w-2 h-2 rounded-full bg-[var(--foundation)]" />
+          </div>
+          <span className="text-[#2b2b2b] font-medium text-sm tracking-widest uppercase">Samsara</span>
         </div>
-        <p className="text-[#64748b] text-xs mt-1">Execution OS</p>
+        <p className="text-[#8a7f6d] text-xs tracking-wide pl-7.5">Life Tracker</p>
       </div>
 
       {/* Nav */}
@@ -29,22 +32,22 @@ export default function Sidebar() {
             end={to === '/'}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200',
                 isActive
-                  ? 'bg-[#4ade80]/10 text-[#4ade80] font-medium'
-                  : 'text-[#64748b] hover:text-[#f1f5f9] hover:bg-white/5'
+                  ? 'bg-[rgba(92,122,92,0.12)] text-[var(--foundation)] font-medium'
+                  : 'text-[#8a7f6d] hover:text-[#2b2b2b] hover:bg-[rgba(139,127,109,0.08)]'
               )
             }
           >
-            <span className="text-base leading-none">{icon}</span>
+            <span className="text-base leading-none opacity-70">{icon}</span>
             {label}
           </NavLink>
         ))}
       </nav>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-[#2a2d3a]">
-        <p className="text-[#64748b] text-xs">SAST · UTC+2</p>
+      <div className="px-6 py-4 border-t border-[rgba(139,127,109,0.15)]">
+        <p className="text-[#8a7f6d] text-xs tracking-wide">SAST · UTC+2</p>
       </div>
     </aside>
   )

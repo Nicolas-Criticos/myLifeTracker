@@ -148,7 +148,7 @@ export function useDailyCheckins(limit = 7) {
     queryKey: ['daily_checkins', limit],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ops_checkins')
+        .from('ops_daily_checkins')
         .select('*')
         .order('date', { ascending: false })
         .limit(limit)
@@ -165,7 +165,7 @@ export function useDailyLogs(limit = 7) {
     queryKey: ['daily_logs', limit],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ops_logs')
+        .from('ops_daily_logs')
         .select('*')
         .order('date', { ascending: false })
         .limit(limit)
@@ -183,7 +183,7 @@ export function useThisWeekLogs() {
     queryKey: ['daily_logs', 'week', startStr],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ops_logs')
+        .from('ops_daily_logs')
         .select('*')
         .gte('date', startStr)
         .lte('date', endStr)
@@ -199,7 +199,7 @@ export function useCreateDailyLog() {
   return useMutation({
     mutationFn: async (log: Omit<DailyLog, 'id' | 'created_at'>) => {
       const { data, error } = await supabase
-        .from('ops_logs')
+        .from('ops_daily_logs')
         .insert(log)
         .select()
         .single()
@@ -219,7 +219,7 @@ export function useWeeklyReviews() {
     queryKey: ['weekly_reviews'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ops_reviews')
+        .from('ops_weekly_reviews')
         .select('*')
         .order('week_start', { ascending: false })
       if (error) throw error
@@ -234,7 +234,7 @@ export function useCurrentWeekReview() {
     queryKey: ['weekly_reviews', weekStart],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('ops_reviews')
+        .from('ops_weekly_reviews')
         .select('*')
         .eq('week_start', weekStart)
         .maybeSingle()
@@ -249,7 +249,7 @@ export function useCreateWeeklyReview() {
   return useMutation({
     mutationFn: async (review: Omit<WeeklyReview, 'id' | 'created_at'>) => {
       const { data, error } = await supabase
-        .from('ops_reviews')
+        .from('ops_weekly_reviews')
         .insert(review)
         .select()
         .single()
@@ -267,7 +267,7 @@ export function useUpdateWeeklyReview() {
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<WeeklyReview> & { id: string }) => {
       const { data, error } = await supabase
-        .from('ops_reviews')
+        .from('ops_weekly_reviews')
         .update(updates)
         .eq('id', id)
         .select()
