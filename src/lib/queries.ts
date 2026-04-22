@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { supabase } from './supabase'
 import type {
   Project, Task, DailyCheckin, DailyLog, WeeklyReview, Pattern,
+  Product, Expense, Sale, CommunityProject, CommunityTask,
 } from './supabase'
 import { getWeekRange, mondayOfCurrentWeek } from './utils'
 
@@ -312,5 +313,106 @@ export function useAcknowledgePattern() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['patterns'] })
     },
+  })
+}
+
+// ── BUSINESS / OLIVE BRAIN ────────────────────────────────────────────────────
+
+export function useProducts() {
+  return useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('active', true)
+        .order('name', { ascending: true })
+      if (error) throw error
+      return data as Product[]
+    },
+  })
+}
+
+export function useSalesData(days = 30) {
+  return useQuery({
+    queryKey: ['sales', days],
+    queryFn: async () => {
+      const since = format(new Date(Date.now() - days * 86400000), 'yyyy-MM-dd')
+      const { data, error } = await supabase
+        .from('sales')
+        .select('*')
+        .gte('date', since)
+        .order('date', { ascending: true })
+      if (error) throw error
+      return data as Sale[]
+    },
+  })
+}
+
+export function useExpenses(days = 30) {
+  return useQuery({
+    queryKey: ['expenses', days],
+    queryFn: async () => {
+      const since = format(new Date(Date.now() - days * 86400000), 'yyyy-MM-dd')
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .gte('date', since)
+        .order('date', { ascending: false })
+      if (error) throw error
+      return data as Expense[]
+    },
+  })
+}
+
+export function useCreateSale() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (sale: Omit<Sale, 'id'>) => {
+      const { data, error } = await supabase
+        .from('sales')
+        .insert(sale)
+        .select()
+        .single()
+      if (error) throw error
+      return data as Sale
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['sales'] })
+    },
+  })
+}
+
+// ── COMMUNITY PROJECTS ────────────────────────────────────────────────────────
+
+export function useCommunityProjects(realm: string) {
+  return useQuery({
+    queryKey: ['community_projects', realm],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('realm', realm)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data as CommunityProject[]
+    },
+    enabled: !!realm,
+  })
+}
+
+export function useCommunityProjectTasks(projectId: string) {
+  return useQuery({
+    queryKey: ['community_tasks', projectId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('project_tasks')
+        .select('*')
+        .eq('project', projectId)
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      return data as CommunityTask[]
+    },
+    enabled: !!projectId,
   })
 }

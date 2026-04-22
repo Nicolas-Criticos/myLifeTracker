@@ -10,6 +10,9 @@ import { format, parseISO } from 'date-fns'
 
 const CATEGORIES: Category[] = ['FOUNDATION', 'LEVERAGE', 'EXPRESSION']
 
+const SURFACE = 'bg-[rgba(240,236,228,0.9)] border border-[rgba(139,127,109,0.15)] rounded-2xl'
+const LABEL = 'text-[#8a7f6d] text-xs uppercase tracking-widest'
+
 export default function WeeklyDashboard() {
   const { data: projects = [], isLoading: loadingProjects } = useProjects()
   const { data: tasks = [], isLoading: loadingTasks } = useTasks()
@@ -51,30 +54,32 @@ export default function WeeklyDashboard() {
   }
 
   return (
-    <div className="space-y-6 p-6 animate-fade-in">
-      {/* Header — centered circle motif */}
-      <div className="flex flex-col items-center text-center py-4">
-        {/* Concentric circle mark */}
-        <div className="relative w-16 h-16 mb-4 flex items-center justify-center">
-          <div className="absolute inset-0 rounded-full border border-[rgba(92,122,92,0.15)]" />
-          <div className="absolute inset-3 rounded-full border border-[rgba(92,122,92,0.25)]" />
-          <div className="w-4 h-4 rounded-full bg-[rgba(92,122,92,0.2)] border border-[rgba(92,122,92,0.4)]" />
+    <div className="max-w-4xl mx-auto px-8 py-10 space-y-10 animate-fade-in">
+
+      {/* Hero — large concentric circle motif */}
+      <div className="flex flex-col items-center text-center py-6">
+        <div className="relative w-24 h-24 mb-8 flex items-center justify-center">
+          <div className="absolute inset-0 rounded-full border border-[rgba(92,122,92,0.08)]" />
+          <div className="absolute inset-3 rounded-full border border-[rgba(92,122,92,0.13)]" />
+          <div className="absolute inset-6 rounded-full border border-[rgba(92,122,92,0.22)]" />
+          <div className="absolute inset-9 rounded-full border border-[rgba(92,122,92,0.35)]" />
+          <div className="w-4 h-4 rounded-full bg-[rgba(92,122,92,0.25)] border border-[rgba(92,122,92,0.5)]" />
         </div>
-        <h2 className="text-[#2b2b2b] text-lg font-light tracking-[0.08em]">
+        <h2 className="text-[#2b2b2b] text-2xl font-light tracking-[0.06em]">
           {formatWeekRange(start, end)}
         </h2>
         {currentReview?.primary_project_id && (
-          <div className="mt-1.5 flex items-center gap-2">
-            <span className="text-[#8a7f6d] text-sm">Primary:</span>
-            <span className="text-[#5c7a5c] text-sm font-medium">
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-[#8a7f6d] text-sm tracking-wide">Primary focus:</span>
+            <span className="text-[#5c7a5c] text-sm">
               {projects.find(p => p.id === currentReview.primary_project_id)?.name ?? '—'}
             </span>
           </div>
         )}
       </div>
 
-      {/* Stats bar */}
-      <div className="grid grid-cols-4 gap-3">
+      {/* Stats — 4 spacious cards */}
+      <div className="grid grid-cols-4 gap-5">
         {[
           { label: 'Completion', value: `${completionRate}%` },
           { label: 'Days Logged', value: `${weekLogs.length}/7` },
@@ -83,22 +88,22 @@ export default function WeeklyDashboard() {
         ].map(stat => (
           <div
             key={stat.label}
-            className="bg-[rgba(240,236,228,0.8)] border border-[rgba(139,127,109,0.15)] rounded-xl p-4 text-center"
+            className={`${SURFACE} p-6 text-center`}
           >
-            <p className="text-[#8a7f6d] text-xs uppercase tracking-widest">{stat.label}</p>
-            <p className="text-[#2b2b2b] text-2xl font-light mt-1.5">{stat.value}</p>
+            <p className={LABEL}>{stat.label}</p>
+            <p className="text-[#2b2b2b] text-3xl font-light mt-3">{stat.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Momentum chart */}
-      <div className="bg-[rgba(240,236,228,0.8)] border border-[rgba(139,127,109,0.15)] rounded-xl p-5">
-        <p className="text-[#8a7f6d] text-xs uppercase tracking-widest mb-4">Momentum this week</p>
+      {/* Momentum chart — full width */}
+      <div className={`${SURFACE} p-8`}>
+        <p className={`${LABEL} mb-6`}>Momentum this week</p>
         <MomentumChart logs={weekLogs} />
       </div>
 
-      {/* 3-column category view */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Category sections — full-width cards stacked */}
+      <div className="space-y-5">
         {CATEGORIES.map(cat => (
           <CategorySection
             key={cat}
@@ -111,14 +116,14 @@ export default function WeeklyDashboard() {
         ))}
       </div>
 
-      {/* Bottom row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Bottom row — patterns + activity */}
+      <div className="grid grid-cols-2 gap-5">
         {/* Patterns */}
-        <div className="bg-[rgba(240,236,228,0.8)] border border-[rgba(139,127,109,0.15)] rounded-xl p-5">
-          <p className="text-[#8a7f6d] text-xs uppercase tracking-widest mb-4">
+        <div className={`${SURFACE} p-7`}>
+          <p className={`${LABEL} mb-5`}>
             Patterns & Alerts
             {patterns.length > 0 && (
-              <span className="ml-2 bg-[rgba(138,106,58,0.12)] text-[#8a6a3a] text-xs px-1.5 py-0.5 rounded-md">
+              <span className="ml-2 bg-[rgba(138,106,58,0.12)] text-[#8a6a3a] text-xs px-1.5 py-0.5 rounded-lg">
                 {patterns.length}
               </span>
             )}
@@ -126,28 +131,28 @@ export default function WeeklyDashboard() {
           {patterns.length === 0 ? (
             <p className="text-[#8a7f6d] text-sm">No active patterns</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {patterns.map(p => <PatternAlert key={p.id} pattern={p} />)}
             </div>
           )}
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-[rgba(240,236,228,0.8)] border border-[rgba(139,127,109,0.15)] rounded-xl p-5">
-          <p className="text-[#8a7f6d] text-xs uppercase tracking-widest mb-4">Recent Activity</p>
+        <div className={`${SURFACE} p-7`}>
+          <p className={`${LABEL} mb-5`}>Recent Activity</p>
           {recentLogs.length === 0 ? (
             <p className="text-[#8a7f6d] text-sm">No logs yet</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
               {recentLogs.map(log => (
-                <div key={log.id} className="flex items-start gap-3 py-2 border-b border-[rgba(139,127,109,0.1)] last:border-0">
+                <div key={log.id} className="flex items-start gap-4 py-3 border-b border-[rgba(139,127,109,0.08)] last:border-0">
                   <div className="text-[#8a7f6d] text-xs w-14 shrink-0 pt-0.5 tracking-wide">
                     {format(parseISO(log.date), 'EEE d')}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5">
                       {log.momentum_score != null && (
-                        <span className="text-[#5c7a5c] text-xs font-medium">
+                        <span className="text-[#5c7a5c] text-xs">
                           {log.momentum_score}/10
                         </span>
                       )}
@@ -158,7 +163,7 @@ export default function WeeklyDashboard() {
                       )}
                     </div>
                     {log.key_insight && (
-                      <p className="text-[#2b2b2b] text-xs mt-0.5 truncate">{log.key_insight}</p>
+                      <p className="text-[#2b2b2b] text-xs mt-1 leading-relaxed">{log.key_insight}</p>
                     )}
                   </div>
                 </div>
@@ -167,6 +172,7 @@ export default function WeeklyDashboard() {
           )}
         </div>
       </div>
+
     </div>
   )
 }

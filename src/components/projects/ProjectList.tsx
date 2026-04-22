@@ -30,20 +30,20 @@ export default function ProjectList({ projects, tasks }: ProjectListProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {CATEGORIES.map(category => {
         const categoryProjects = projects.filter(p => p.category === category)
         return (
           <div key={category}>
-            <div className="flex items-center gap-2 mb-3">
-              <span className={cn('text-xs font-semibold uppercase tracking-widest px-2.5 py-1 rounded', categoryBadge(category))}>
+            <div className="flex items-center gap-3 mb-5">
+              <span className={cn('text-xs font-medium uppercase tracking-widest px-3 py-1.5 rounded-lg', categoryBadge(category))}>
                 {categoryLabel[category]}
               </span>
-              <span className="text-[#64748b] text-xs">{categoryProjects.length} projects</span>
+              <span className="text-[#8a7f6d] text-xs tracking-wide">{categoryProjects.length} projects</span>
             </div>
 
             {categoryProjects.length === 0 ? (
-              <p className="text-[#64748b] text-sm pl-4">No projects</p>
+              <p className="text-[#8a7f6d] text-sm pl-2">No projects</p>
             ) : (
               <div className="space-y-3">
                 {categoryProjects.map(project => {
@@ -57,23 +57,26 @@ export default function ProjectList({ projects, tasks }: ProjectListProps) {
                   const isOpen = expanded.has(project.id)
 
                   return (
-                    <div key={project.id} className="bg-[#1a1d27] border border-[#2a2d3a] rounded-lg overflow-hidden">
+                    <div
+                      key={project.id}
+                      className="bg-[rgba(240,236,228,0.9)] border border-[rgba(139,127,109,0.15)] rounded-2xl overflow-hidden"
+                    >
                       {/* Project header */}
                       <div
-                        className="flex items-center gap-3 p-4 cursor-pointer hover:bg-white/3 transition-colors"
+                        className="flex items-center gap-4 p-6 cursor-pointer hover:bg-[rgba(139,127,109,0.04)] transition-colors"
                         onClick={() => toggle(project.id)}
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-[#f1f5f9] text-sm font-medium">{project.name}</h3>
-                            <span className={cn('text-xs px-1.5 py-0.5 rounded font-medium', statusBadge(project.status))}>
+                          <div className="flex items-center gap-2.5 mb-1">
+                            <h3 className="text-[#2b2b2b] text-base font-light tracking-wide">{project.name}</h3>
+                            <span className={cn('text-xs px-2 py-0.5 rounded-lg', statusBadge(project.status))}>
                               {project.status}
                             </span>
                           </div>
                           {project.description && (
-                            <p className="text-[#64748b] text-xs mt-0.5 truncate">{project.description}</p>
+                            <p className="text-[#8a7f6d] text-sm truncate leading-relaxed">{project.description}</p>
                           )}
-                          <p className="text-[#64748b] text-xs mt-1">
+                          <p className="text-[#8a7f6d] text-xs mt-1.5 tracking-wide">
                             {completedTasks.length}/{activeTasks.length} tasks complete
                           </p>
                         </div>
@@ -81,16 +84,16 @@ export default function ProjectList({ projects, tasks }: ProjectListProps) {
                         <Link
                           to={`/projects/${project.id}`}
                           onClick={e => e.stopPropagation()}
-                          className="text-[#64748b] hover:text-[#60a5fa] text-xs px-2 py-1 rounded hover:bg-[#60a5fa]/10 transition-colors"
+                          className="text-[#8a7f6d] hover:text-[#4a6b8a] text-xs px-3 py-1.5 rounded-lg hover:bg-[rgba(74,107,138,0.08)] transition-colors tracking-wide"
                         >
                           Detail →
                         </Link>
-                        <span className="text-[#64748b] text-xs">{isOpen ? '▲' : '▼'}</span>
+                        <span className="text-[#8a7f6d] text-xs">{isOpen ? '▲' : '▼'}</span>
                       </div>
 
                       {/* Expanded task list */}
                       {isOpen && (
-                        <div className="border-t border-[#2a2d3a] p-4">
+                        <div className="border-t border-[rgba(139,127,109,0.12)] px-6 pb-6 pt-5">
                           <TaskList projectId={project.id} tasks={projectTasks} />
                         </div>
                       )}

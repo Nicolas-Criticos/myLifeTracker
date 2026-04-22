@@ -87,3 +87,89 @@ export interface Pattern {
   suggestion: string | null
   acknowledged: boolean
 }
+
+// ── OLIVE BRAIN / BUSINESS TYPES ─────────────────────────────────────────────
+
+export interface Product {
+  id: string
+  name: string
+  sku: string | null
+  sell_price: number
+  active: boolean
+  created_at: string
+}
+
+export interface CostComponent {
+  id: string
+  product_id: string
+  name: string
+  cost_type: string
+  amount: number | null
+  amount_min: number | null
+  amount_max: number | null
+  applies_to: string | null
+  active: boolean
+}
+
+export interface Expense {
+  id: string
+  date: string
+  description: string
+  amount: number
+  cost_component_id: string | null
+  product_id: string | null
+  category: string | null
+  allocation: string | null
+  units_covered: number | null
+  notes: string | null
+}
+
+export interface Sale {
+  id: string
+  date: string
+  product_id: string
+  units: number
+  sell_price_actual: number
+  channel: string | null
+  delivery_cost: number | null
+  customer_region: string | null
+  notes: string | null
+}
+
+export interface SystemParam {
+  id: string
+  key: string
+  value: string
+  label: string | null
+  description: string | null
+  updated_at: string
+}
+
+// ── COMMUNITY APP TYPES ───────────────────────────────────────────────────────
+
+export interface CommunityProject {
+  id: string
+  title: string
+  description: string | null
+  image_url: string | null
+  status: string | null
+  roles_needed: string[] | null
+  timeline: string | null
+  created_by: string | null
+  created_at: string
+  archived: boolean | null
+  realm: string | null
+  start_date: string | null
+  end_date: string | null
+}
+
+export interface CommunityTask {
+  id: string
+  created_at: string
+  name: string
+  description: string | null
+  status: string | null
+  project: string
+  start_date: string | null
+  end_date: string | null
+}
