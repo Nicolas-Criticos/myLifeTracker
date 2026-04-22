@@ -39,8 +39,14 @@ export interface Task {
 export interface DailyCheckin {
   id: string
   date: string
+  wake_time: string | null
+  morning_routine: string | null
+  reflection: string | null
+  whats_weighing: string | null
+  whats_light: string | null
   energy_level: number
   focus_level: number
+  peace_level: number | null
   physical_constraints: string | null
   available_hours: number | null
   intent: string | null
@@ -53,11 +59,14 @@ export interface DailyLog {
   id: string
   date: string
   checkin_id: string | null
+  what_happened: string | null
+  evening_reflection: string | null
   tasks_completed: string[] | null
   tasks_attempted: string[] | null
   blockers: string | null
   observations: string | null
   momentum_score: number | null
+  peace_level: number | null
   key_insight: string | null
   created_at: string
 }

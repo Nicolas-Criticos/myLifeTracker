@@ -7,6 +7,7 @@ import ProjectDetailPage from './pages/ProjectDetail'
 import Reviews from './pages/Reviews'
 import Insights from './pages/Insights'
 import Business from './pages/Business'
+import Journal from './pages/Journal'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +32,7 @@ export default function App() {
               <Route path="/reviews" element={<Reviews />} />
               <Route path="/insights" element={<Insights />} />
               <Route path="/business" element={<Business />} />
+              <Route path="/journal" element={<Journal />} />
             </Routes>
           </div>
         </div>
