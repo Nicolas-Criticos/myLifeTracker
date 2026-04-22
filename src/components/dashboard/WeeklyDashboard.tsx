@@ -4,6 +4,7 @@ import PatternAlert from './PatternAlert'
 import { getWeekRange, formatWeekRange, nowInSAST } from '../../lib/utils'
 import {
   useProjects, useTasks, useThisWeekLogs, useCurrentWeekReview, usePatterns, useDailyLogs,
+  useThisWeekTasks, useThisWeekCheckins, usePreviousWeekCheckins, useThisWeekSales, usePreviousWeekSales,
 } from '../../lib/queries'
 import type { Category } from '../../lib/supabase'
 import { format, parseISO } from 'date-fns'
@@ -26,6 +27,11 @@ export default function WeeklyDashboard() {
   const { data: currentReview } = useCurrentWeekReview()
   const { data: patterns = [] } = usePatterns(true)
   const { data: recentLogs = [] } = useDailyLogs(5)
+  const { data: thisWeekTasks = [] } = useThisWeekTasks()
+  const { data: thisWeekCheckins = [] } = useThisWeekCheckins()
+  const { data: prevWeekCheckins = [] } = usePreviousWeekCheckins()
+  const { data: thisWeekSales = [] } = useThisWeekSales()
+  const { data: prevWeekSales = [] } = usePreviousWeekSales()
 
   const now = nowInSAST()
   const { start, end } = getWeekRange(now)
@@ -68,6 +74,51 @@ export default function WeeklyDashboard() {
       </div>
     )
   }
+
+  // ── Two Dashboards derived values ──────────────────────────────────────────
+
+  const totalSalesThisWeek = thisWeekSales.reduce((s, sale) => s + sale.units * sale.sell_price_actual, 0)
+  const totalSalesPrevWeek = prevWeekSales.reduce((s, sale) => s + sale.units * sale.sell_price_actual, 0)
+  const revenueDiff = totalSalesThisWeek - totalSalesPrevWeek
+  const revenueTrendLabel = totalSalesPrevWeek === 0 && totalSalesThisWeek === 0
+    ? 'no sales data yet'
+    : totalSalesPrevWeek === 0
+      ? 'first week tracked'
+      : revenueDiff > 0
+        ? `↑ R${revenueDiff.toFixed(0)} vs last week`
+        : revenueDiff < 0
+          ? `↓ R${Math.abs(revenueDiff).toFixed(0)} vs last week`
+          : 'flat vs last week'
+
+  const activeProjectsCount = projects.filter(p => p.status === 'active').length
+  const tasksCompletedThisWeek = thisWeekTasks.filter(t => t.status === 'completed').length
+
+  const computeAvg = (values: (number | null)[]) => {
+    const valid = values.filter((v): v is number => v != null)
+    return valid.length > 0 ? (valid.reduce((s, v) => s + v, 0) / valid.length).toFixed(1) : '—'
+  }
+
+  const avgEnergy = computeAvg(thisWeekCheckins.map(c => c.energy_level))
+  const avgFocus  = computeAvg(thisWeekCheckins.map(c => c.focus_level))
+  const avgPeace  = computeAvg(thisWeekCheckins.map(c => c.peace_level))
+  const checkinDaysThisWeek = thisWeekCheckins.length
+  const noCheckinData = thisWeekCheckins.length === 0
+
+  const prevAvgEnergy = prevWeekCheckins.length > 0
+    ? prevWeekCheckins.reduce((s, c) => s + c.energy_level, 0) / prevWeekCheckins.length
+    : null
+  const thisAvgEnergy = thisWeekCheckins.length > 0
+    ? thisWeekCheckins.reduce((s, c) => s + c.energy_level, 0) / thisWeekCheckins.length
+    : null
+  const humanTrend = prevAvgEnergy == null || thisAvgEnergy == null
+    ? 'no prior data'
+    : thisAvgEnergy > prevAvgEnergy + 0.3
+      ? 'trending up'
+      : thisAvgEnergy < prevAvgEnergy - 0.3
+        ? 'trending down'
+        : 'holding steady'
+
+  const latestKeyInsight = recentLogs[0]?.key_insight ?? null
 
   const stats = [
     { label: 'Completion',    value: `${completionRate}%` },
@@ -139,6 +190,180 @@ export default function WeeklyDashboard() {
             </p>
           </div>
         ))}
+      </div>
+
+      {/* Two Dashboards — The Numbers vs The Human */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '40px' }}>
+
+        {/* Left: The Numbers */}
+        <div className="card" style={{
+          padding: '32px',
+          borderColor: 'rgba(107,124,92,0.4)',
+          background: 'rgba(255,252,245,0.75)',
+          backdropFilter: 'blur(12px)',
+        }}>
+          <p style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.58rem',
+            fontWeight: 300,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: 'rgba(107,124,92,0.85)',
+            marginBottom: '28px',
+          }}>The Numbers</p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div>
+              <p style={{ ...LABEL, marginBottom: '6px' }}>Total Sales</p>
+              <p style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '2.6rem',
+                fontWeight: 300,
+                color: 'var(--ink)',
+                lineHeight: 1,
+              }}>
+                R{totalSalesThisWeek.toFixed(0)}
+              </p>
+              <p style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.72rem',
+                fontWeight: 300,
+                color: 'var(--ink-muted)',
+                marginTop: '6px',
+                letterSpacing: '0.02em',
+              }}>
+                {revenueTrendLabel}
+              </p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <p style={{ ...LABEL, marginBottom: '6px' }}>Active Projects</p>
+                <p style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '2rem',
+                  fontWeight: 300,
+                  color: 'var(--ink)',
+                  lineHeight: 1,
+                }}>
+                  {activeProjectsCount}
+                </p>
+              </div>
+              <div>
+                <p style={{ ...LABEL, marginBottom: '6px' }}>Tasks Done</p>
+                <p style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '2rem',
+                  fontWeight: 300,
+                  color: 'var(--ink)',
+                  lineHeight: 1,
+                }}>
+                  {tasksCompletedThisWeek}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: The Human */}
+        <div className="card" style={{
+          padding: '32px',
+          borderColor: 'rgba(195,162,97,0.45)',
+          background: 'rgba(255,252,245,0.75)',
+          backdropFilter: 'blur(12px)',
+        }}>
+          <p style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.58rem',
+            fontWeight: 300,
+            letterSpacing: '0.22em',
+            textTransform: 'uppercase',
+            color: 'rgba(195,162,97,0.95)',
+            marginBottom: '28px',
+          }}>The Human</p>
+
+          {noCheckinData ? (
+            <p style={{
+              fontFamily: 'var(--font-body)',
+              fontWeight: 300,
+              fontSize: '0.875rem',
+              color: 'var(--ink-muted)',
+              fontStyle: 'italic',
+              lineHeight: 1.7,
+            }}>
+              Check in with Tracey to start seeing your human dashboard.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                {([
+                  { label: 'Energy', value: avgEnergy },
+                  { label: 'Focus',  value: avgFocus  },
+                  { label: 'Peace',  value: avgPeace  },
+                ] as const).map(({ label, value }) => (
+                  <div key={label}>
+                    <p style={{ ...LABEL, marginBottom: '6px' }}>{label}</p>
+                    <p style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: '2rem',
+                      fontWeight: 300,
+                      color: 'var(--ink)',
+                      lineHeight: 1,
+                    }}>
+                      {value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                <div>
+                  <p style={{ ...LABEL, marginBottom: '6px' }}>Days Logged</p>
+                  <p style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '1.5rem',
+                    fontWeight: 300,
+                    color: 'var(--ink)',
+                    lineHeight: 1,
+                  }}>
+                    {checkinDaysThisWeek}/7
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ ...LABEL, marginBottom: '4px' }}>Week Trend</p>
+                  <p style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.8rem',
+                    fontWeight: 300,
+                    color: 'var(--ink-muted)',
+                    fontStyle: 'italic',
+                  }}>
+                    {humanTrend}
+                  </p>
+                </div>
+              </div>
+
+              {latestKeyInsight && (
+                <div style={{
+                  borderLeft: '2px solid rgba(195,162,97,0.35)',
+                  paddingLeft: '14px',
+                }}>
+                  <p style={{ ...LABEL, marginBottom: '6px' }}>Latest Insight</p>
+                  <p style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.82rem',
+                    fontWeight: 300,
+                    color: 'var(--ink)',
+                    lineHeight: 1.65,
+                    fontStyle: 'italic',
+                  }}>
+                    "{latestKeyInsight}"
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Momentum chart */}

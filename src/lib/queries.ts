@@ -383,6 +383,82 @@ export function useCreateSale() {
   })
 }
 
+export function useThisWeekCheckins() {
+  const { start, end } = getWeekRange()
+  const startStr = format(start, 'yyyy-MM-dd')
+  const endStr = format(end, 'yyyy-MM-dd')
+  return useQuery({
+    queryKey: ['daily_checkins', 'week', startStr],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ops_daily_checkins')
+        .select('*')
+        .gte('date', startStr)
+        .lte('date', endStr)
+        .order('date', { ascending: true })
+      if (error) throw error
+      return data as DailyCheckin[]
+    },
+  })
+}
+
+export function usePreviousWeekCheckins() {
+  const { start, end } = getWeekRange(new Date(Date.now() - 7 * 86400000))
+  const startStr = format(start, 'yyyy-MM-dd')
+  const endStr = format(end, 'yyyy-MM-dd')
+  return useQuery({
+    queryKey: ['daily_checkins', 'prev_week', startStr],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ops_daily_checkins')
+        .select('*')
+        .gte('date', startStr)
+        .lte('date', endStr)
+        .order('date', { ascending: true })
+      if (error) throw error
+      return data as DailyCheckin[]
+    },
+  })
+}
+
+export function useThisWeekSales() {
+  const { start, end } = getWeekRange()
+  const startStr = format(start, 'yyyy-MM-dd')
+  const endStr = format(end, 'yyyy-MM-dd')
+  return useQuery({
+    queryKey: ['sales', 'week', startStr],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('*')
+        .gte('date', startStr)
+        .lte('date', endStr)
+        .order('date', { ascending: true })
+      if (error) throw error
+      return data as Sale[]
+    },
+  })
+}
+
+export function usePreviousWeekSales() {
+  const { start, end } = getWeekRange(new Date(Date.now() - 7 * 86400000))
+  const startStr = format(start, 'yyyy-MM-dd')
+  const endStr = format(end, 'yyyy-MM-dd')
+  return useQuery({
+    queryKey: ['sales', 'prev_week', startStr],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('*')
+        .gte('date', startStr)
+        .lte('date', endStr)
+        .order('date', { ascending: true })
+      if (error) throw error
+      return data as Sale[]
+    },
+  })
+}
+
 // ── COMMUNITY PROJECTS ────────────────────────────────────────────────────────
 
 export function useCommunityProjects(realm: string) {
