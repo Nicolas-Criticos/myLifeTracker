@@ -1,5 +1,4 @@
 import ProjectCard from './ProjectCard'
-import { categoryBadge, cn } from '../../lib/utils'
 import type { Category, Project, Task } from '../../lib/supabase'
 
 interface CategorySectionProps {
@@ -10,10 +9,10 @@ interface CategorySectionProps {
   secondaryProjectIds?: string[] | null
 }
 
-const categoryLabel: Record<Category, string> = {
-  FOUNDATION: 'Foundation',
-  LEVERAGE: 'Leverage',
-  EXPRESSION: 'Expression',
+const categoryConfig: Record<Category, { label: string; color: string; dot: string }> = {
+  FOUNDATION: { label: 'Foundation', color: 'var(--foundation)', dot: '#5c7a5c' },
+  LEVERAGE:   { label: 'Leverage',   color: 'var(--leverage)',   dot: '#4a6b8a' },
+  EXPRESSION: { label: 'Expression', color: 'var(--expression)', dot: '#8a6a3a' },
 }
 
 export default function CategorySection({
@@ -24,17 +23,35 @@ export default function CategorySection({
   secondaryProjectIds,
 }: CategorySectionProps) {
   const cats = projects.filter(p => p.category === category)
+  const { label, color, dot } = categoryConfig[category]
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        <span className={cn('text-xs font-semibold uppercase tracking-widest px-2 py-1 rounded', categoryBadge(category))}>
-          {categoryLabel[category]}
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: dot, flexShrink: 0 }} />
+        <span style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: '0.65rem',
+          fontWeight: 400,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color,
+        }}>
+          {label}
         </span>
       </div>
-      <div className="space-y-2">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {cats.length === 0 ? (
-          <p className="text-[#8a7f6d] text-sm">No projects</p>
+          <p style={{
+            fontFamily: 'var(--font-body)',
+            fontWeight: 300,
+            fontSize: '0.875rem',
+            color: 'var(--ink-muted)',
+            padding: '12px 0',
+            fontStyle: 'italic',
+          }}>
+            No projects yet.
+          </p>
         ) : (
           cats.map(project => (
             <ProjectCard

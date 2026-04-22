@@ -7,10 +7,10 @@ interface PatternAlertProps {
 }
 
 const patternIcon: Record<string, string> = {
-  repeated_delay: '⏱',
+  repeated_delay:      '⏱',
   low_energy_overload: '🔋',
-  avoidance: '↩',
-  default: '◎',
+  avoidance:           '↩',
+  default:             '◎',
 }
 
 export default function PatternAlert({ pattern }: PatternAlertProps) {
@@ -18,26 +18,62 @@ export default function PatternAlert({ pattern }: PatternAlertProps) {
   const icon = patternIcon[pattern.pattern_type] ?? patternIcon.default
 
   return (
-    <div className="flex items-start gap-3 bg-amber-400/5 border border-amber-400/20 rounded-lg p-3">
-      <span className="text-amber-400 text-base mt-0.5 shrink-0">{icon}</span>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-amber-400/80 text-xs font-medium uppercase tracking-wide">
+    <div style={{
+      display: 'flex',
+      alignItems: 'flex-start',
+      gap: '12px',
+      background: 'var(--clay-muted)',
+      border: '1px solid var(--border-warm)',
+      borderRadius: 'var(--radius-sm)',
+      padding: '12px 14px',
+    }}>
+      <span style={{ fontSize: '0.9rem', marginTop: '2px', flexShrink: 0 }}>{icon}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
+          <span style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.62rem',
+            fontWeight: 400,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: 'var(--clay)',
+          }}>
             {pattern.pattern_type.replace(/_/g, ' ')}
           </span>
-          <span className="text-[#64748b] text-xs shrink-0">
+          <span style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.7rem',
+            fontWeight: 300,
+            color: 'var(--ink-muted)',
+            flexShrink: 0,
+          }}>
             {format(parseISO(pattern.detected_at), 'MMM d')}
           </span>
         </div>
-        <p className="text-[#f1f5f9] text-sm mt-0.5">{pattern.description}</p>
+        <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.82rem', fontWeight: 300, color: 'var(--ink)', lineHeight: 1.5 }}>
+          {pattern.description}
+        </p>
         {pattern.suggestion && (
-          <p className="text-[#64748b] text-xs mt-1">→ {pattern.suggestion}</p>
+          <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.75rem', fontWeight: 300, color: 'var(--ink-muted)', marginTop: '4px' }}>
+            → {pattern.suggestion}
+          </p>
         )}
       </div>
       <button
         onClick={() => acknowledge.mutate(pattern.id)}
         disabled={acknowledge.isPending}
-        className="text-[#64748b] hover:text-[#f1f5f9] text-xs shrink-0 transition-colors px-2 py-1 rounded hover:bg-white/5"
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--ink-muted)',
+          fontSize: '0.7rem',
+          padding: '4px 6px',
+          borderRadius: '6px',
+          flexShrink: 0,
+          opacity: acknowledge.isPending ? 0.5 : 1,
+          transition: 'opacity 200ms',
+        }}
         title="Dismiss"
       >
         ✕

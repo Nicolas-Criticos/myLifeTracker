@@ -1,22 +1,85 @@
+import { NavLink } from 'react-router-dom'
 import { format } from 'date-fns'
-import { formatWeekRange, getWeekRange, nowInSAST } from '../../lib/utils'
+import { nowInSAST } from '../../lib/utils'
 
-interface TopBarProps {
-  title: string
-}
+const nav = [
+  { to: '/', label: 'Dashboard', end: true },
+  { to: '/projects', label: 'Projects' },
+  { to: '/reviews', label: 'Reviews' },
+  { to: '/business', label: 'Business' },
+  { to: '/insights', label: 'Insights' },
+]
 
-export default function TopBar({ title }: TopBarProps) {
+export default function TopBar() {
   const now = nowInSAST()
-  const { start, end } = getWeekRange(now)
 
   return (
-    <header className="h-14 border-b border-[rgba(139,127,109,0.15)] bg-[#f6f3ee] flex items-center justify-between px-6 shrink-0">
-      <h1 className="text-[#2b2b2b] font-medium text-base tracking-wide">{title}</h1>
-      <div className="flex items-center gap-4 text-sm text-[#8a7f6d]">
-        <span className="tracking-wide">Week: {formatWeekRange(start, end)}</span>
-        <span className="text-[rgba(139,127,109,0.3)]">·</span>
-        <span>{format(now, 'EEE, MMM d')}</span>
+    <header style={{
+      position: 'sticky',
+      top: 0,
+      zIndex: 50,
+      height: '64px',
+      background: 'rgba(255, 252, 245, 0.85)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      borderBottom: '1px solid var(--border)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '0 40px',
+    }}>
+      {/* Logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <svg width="28" height="28" fill="none" viewBox="0 0 28 28">
+          <circle cx="14" cy="14" r="13" stroke="rgba(107,124,92,0.12)" strokeWidth="1" />
+          <circle cx="14" cy="14" r="9"  stroke="rgba(107,124,92,0.2)"  strokeWidth="1" />
+          <circle cx="14" cy="14" r="5"  stroke="rgba(107,124,92,0.35)" strokeWidth="1" />
+          <circle cx="14" cy="14" r="2"  fill="rgba(107,124,92,0.5)" />
+        </svg>
+        <span style={{
+          fontFamily: 'var(--font-display)',
+          fontWeight: 300,
+          fontSize: '1.15rem',
+          color: 'var(--ink)',
+          letterSpacing: '0.05em',
+        }}>
+          Samsara
+        </span>
       </div>
+
+      {/* Center nav */}
+      <nav style={{ display: 'flex', alignItems: 'center', gap: '36px' }}>
+        {nav.map(({ to, label, end }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            style={({ isActive }) => ({
+              fontFamily: 'var(--font-body)',
+              fontSize: '0.68rem',
+              fontWeight: 400,
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              textDecoration: 'none',
+              color: isActive ? 'var(--olive)' : 'var(--ink-faint)',
+              transition: 'color 200ms ease',
+            })}
+          >
+            {label}
+          </NavLink>
+        ))}
+      </nav>
+
+      {/* Date */}
+      <span style={{
+        fontFamily: 'var(--font-body)',
+        fontWeight: 300,
+        fontSize: '0.8rem',
+        color: 'var(--ink-muted)',
+        letterSpacing: '0.03em',
+      }}>
+        {format(now, 'EEE, MMM d')}
+      </span>
     </header>
   )
 }

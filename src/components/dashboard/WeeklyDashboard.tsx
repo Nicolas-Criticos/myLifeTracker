@@ -10,8 +10,14 @@ import { format, parseISO } from 'date-fns'
 
 const CATEGORIES: Category[] = ['FOUNDATION', 'LEVERAGE', 'EXPRESSION']
 
-const SURFACE = 'bg-[rgba(240,236,228,0.9)] border border-[rgba(139,127,109,0.15)] rounded-2xl'
-const LABEL = 'text-[#8a7f6d] text-xs uppercase tracking-widest'
+const LABEL: React.CSSProperties = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '0.65rem',
+  fontWeight: 400,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-muted)',
+}
 
 export default function WeeklyDashboard() {
   const { data: projects = [], isLoading: loadingProjects } = useProjects()
@@ -47,63 +53,104 @@ export default function WeeklyDashboard() {
 
   if (loadingProjects || loadingTasks) {
     return (
-      <div className="flex items-center justify-center h-64 text-[#8a7f6d] tracking-wide">
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '256px',
+        fontFamily: 'var(--font-display)',
+        fontWeight: 300,
+        fontSize: '1.1rem',
+        color: 'var(--ink-muted)',
+        letterSpacing: '0.05em',
+      }}>
         Loading…
       </div>
     )
   }
 
-  return (
-    <div className="max-w-4xl mx-auto px-8 py-10 space-y-10 animate-fade-in">
+  const stats = [
+    { label: 'Completion',    value: `${completionRate}%` },
+    { label: 'Days Logged',   value: `${weekLogs.length}/7` },
+    { label: 'Avg Momentum',  value: avgMomentum },
+    { label: 'Streak',        value: `${streak}d` },
+  ]
 
-      {/* Hero — large concentric circle motif */}
-      <div className="flex flex-col items-center text-center py-6">
-        <div className="relative w-24 h-24 mb-8 flex items-center justify-center">
-          <div className="absolute inset-0 rounded-full border border-[rgba(92,122,92,0.08)]" />
-          <div className="absolute inset-3 rounded-full border border-[rgba(92,122,92,0.13)]" />
-          <div className="absolute inset-6 rounded-full border border-[rgba(92,122,92,0.22)]" />
-          <div className="absolute inset-9 rounded-full border border-[rgba(92,122,92,0.35)]" />
-          <div className="w-4 h-4 rounded-full bg-[rgba(92,122,92,0.25)] border border-[rgba(92,122,92,0.5)]" />
-        </div>
-        <h2 className="text-[#2b2b2b] text-2xl font-light tracking-[0.06em]">
+  const primaryProject = currentReview?.primary_project_id
+    ? projects.find(p => p.id === currentReview.primary_project_id)
+    : null
+
+  return (
+    <div className="animate-in" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 40px 80px' }}>
+
+      {/* Hero */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingTop: '80px',
+        paddingBottom: '60px',
+        textAlign: 'center',
+      }}>
+        <svg width="120" height="120" fill="none" viewBox="0 0 120 120" style={{ marginBottom: '32px' }}>
+          <circle cx="60" cy="60" r="58" stroke="rgba(107,124,92,0.06)" strokeWidth="1" />
+          <circle cx="60" cy="60" r="45" stroke="rgba(107,124,92,0.1)"  strokeWidth="1" />
+          <circle cx="60" cy="60" r="32" stroke="rgba(107,124,92,0.18)" strokeWidth="1" />
+          <circle cx="60" cy="60" r="18" stroke="rgba(107,124,92,0.28)" strokeWidth="1" />
+          <circle cx="60" cy="60" r="5"  fill="rgba(107,124,92,0.35)" />
+        </svg>
+        <h2 style={{
+          fontFamily: 'var(--font-display)',
+          fontWeight: 300,
+          fontSize: '2rem',
+          color: 'var(--ink)',
+          letterSpacing: '0.04em',
+          margin: 0,
+        }}>
           {formatWeekRange(start, end)}
         </h2>
-        {currentReview?.primary_project_id && (
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-[#8a7f6d] text-sm tracking-wide">Primary focus:</span>
-            <span className="text-[#5c7a5c] text-sm">
-              {projects.find(p => p.id === currentReview.primary_project_id)?.name ?? '—'}
-            </span>
-          </div>
+        {primaryProject && (
+          <p style={{
+            fontFamily: 'var(--font-body)',
+            fontWeight: 300,
+            fontSize: '0.82rem',
+            color: 'var(--ink-muted)',
+            marginTop: '10px',
+            letterSpacing: '0.05em',
+          }}>
+            {primaryProject.name}
+          </p>
         )}
       </div>
 
-      {/* Stats — 4 spacious cards */}
-      <div className="grid grid-cols-4 gap-5">
-        {[
-          { label: 'Completion', value: `${completionRate}%` },
-          { label: 'Days Logged', value: `${weekLogs.length}/7` },
-          { label: 'Avg Momentum', value: avgMomentum },
-          { label: 'Streak', value: `${streak}d` },
-        ].map(stat => (
-          <div
-            key={stat.label}
-            className={`${SURFACE} p-6 text-center`}
-          >
-            <p className={LABEL}>{stat.label}</p>
-            <p className="text-[#2b2b2b] text-3xl font-light mt-3">{stat.value}</p>
+      {/* Stats row — 4 floating cards */}
+      <div className="stagger" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '40px' }}>
+        {stats.map(stat => (
+          <div key={stat.label} className="card" style={{ textAlign: 'center', padding: '28px 20px' }}>
+            <p style={{ ...LABEL, marginBottom: '12px' }}>{stat.label}</p>
+            <p style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: '3rem',
+              fontWeight: 300,
+              color: 'var(--ink)',
+              lineHeight: 1,
+            }}>
+              {stat.value}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* Momentum chart — full width */}
-      <div className={`${SURFACE} p-8`}>
-        <p className={`${LABEL} mb-6`}>Momentum this week</p>
+      {/* Momentum chart */}
+      <div className="card" style={{ marginBottom: '40px', padding: '32px' }}>
+        <p style={{ ...LABEL, marginBottom: '8px', fontFamily: 'var(--font-display)', fontSize: '0.9rem', letterSpacing: '0.06em', fontWeight: 300, textTransform: 'none' }}>
+          This week
+        </p>
         <MomentumChart logs={weekLogs} />
       </div>
 
-      {/* Category sections — full-width cards stacked */}
-      <div className="space-y-5">
+      {/* Category sections */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginBottom: '40px' }}>
         {CATEGORIES.map(cat => (
           <CategorySection
             key={cat}
@@ -116,58 +163,104 @@ export default function WeeklyDashboard() {
         ))}
       </div>
 
-      {/* Bottom row — patterns + activity */}
-      <div className="grid grid-cols-2 gap-5">
-        {/* Patterns */}
-        <div className={`${SURFACE} p-7`}>
-          <p className={`${LABEL} mb-5`}>
-            Patterns & Alerts
-            {patterns.length > 0 && (
-              <span className="ml-2 bg-[rgba(138,106,58,0.12)] text-[#8a6a3a] text-xs px-1.5 py-0.5 rounded-lg">
-                {patterns.length}
-              </span>
-            )}
-          </p>
-          {patterns.length === 0 ? (
-            <p className="text-[#8a7f6d] text-sm">No active patterns</p>
-          ) : (
-            <div className="space-y-3">
-              {patterns.map(p => <PatternAlert key={p.id} pattern={p} />)}
-            </div>
-          )}
-        </div>
+      {/* Bottom row — activity + patterns */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
 
-        {/* Recent Activity */}
-        <div className={`${SURFACE} p-7`}>
-          <p className={`${LABEL} mb-5`}>Recent Activity</p>
+        {/* Recent activity */}
+        <div className="card" style={{ padding: '28px' }}>
+          <p style={{ ...LABEL, marginBottom: '20px' }}>Recent Activity</p>
           {recentLogs.length === 0 ? (
-            <p className="text-[#8a7f6d] text-sm">No logs yet</p>
+            <p style={{
+              fontFamily: 'var(--font-body)',
+              fontWeight: 300,
+              fontSize: '0.875rem',
+              color: 'var(--ink-muted)',
+              fontStyle: 'italic',
+              lineHeight: 1.6,
+            }}>
+              Today is day one. Come back tonight and log how it went.
+            </p>
           ) : (
-            <div className="space-y-1">
-              {recentLogs.map(log => (
-                <div key={log.id} className="flex items-start gap-4 py-3 border-b border-[rgba(139,127,109,0.08)] last:border-0">
-                  <div className="text-[#8a7f6d] text-xs w-14 shrink-0 pt-0.5 tracking-wide">
+            <div>
+              {recentLogs.map((log, i) => (
+                <div
+                  key={log.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '16px',
+                    padding: '12px 0',
+                    borderBottom: i < recentLogs.length - 1 ? '1px solid var(--border)' : 'none',
+                  }}
+                >
+                  <span style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.72rem',
+                    fontWeight: 300,
+                    color: 'var(--ink-muted)',
+                    width: '48px',
+                    flexShrink: 0,
+                    paddingTop: '2px',
+                  }}>
                     {format(parseISO(log.date), 'EEE d')}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2.5">
-                      {log.momentum_score != null && (
-                        <span className="text-[#5c7a5c] text-xs">
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {log.momentum_score != null && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <div style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          background: `rgba(107,124,92,${0.2 + (log.momentum_score / 14)})`,
+                          flexShrink: 0,
+                        }} />
+                        <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', color: 'var(--olive)', fontWeight: 300 }}>
                           {log.momentum_score}/10
                         </span>
-                      )}
-                      {log.tasks_completed && (
-                        <span className="text-[#8a7f6d] text-xs">
-                          {log.tasks_completed.length} completed
-                        </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                     {log.key_insight && (
-                      <p className="text-[#2b2b2b] text-xs mt-1 leading-relaxed">{log.key_insight}</p>
+                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8rem', fontWeight: 300, color: 'var(--ink)', lineHeight: 1.5 }}>
+                        {log.key_insight}
+                      </p>
                     )}
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Patterns */}
+        <div className="card" style={{ padding: '28px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <p style={LABEL}>Patterns</p>
+            {patterns.length > 0 && (
+              <span style={{
+                background: 'var(--clay-muted)',
+                color: 'var(--clay)',
+                fontSize: '0.68rem',
+                fontFamily: 'var(--font-body)',
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-full)',
+              }}>
+                {patterns.length}
+              </span>
+            )}
+          </div>
+          {patterns.length === 0 ? (
+            <p style={{
+              fontFamily: 'var(--font-body)',
+              fontWeight: 300,
+              fontSize: '0.875rem',
+              color: 'var(--ink-muted)',
+              fontStyle: 'italic',
+            }}>
+              Nothing to flag — keep going.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {patterns.map(p => <PatternAlert key={p.id} pattern={p} />)}
             </div>
           )}
         </div>

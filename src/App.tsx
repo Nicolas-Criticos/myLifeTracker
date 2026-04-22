@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import Sidebar from './components/layout/Sidebar'
+import TopBar from './components/layout/TopBar'
 import Dashboard from './pages/Dashboard'
 import Projects from './pages/Projects'
 import ProjectDetailPage from './pages/ProjectDetail'
@@ -21,9 +21,9 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <div className="flex h-full samsara-bg">
-          <Sidebar />
-          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="samsara-bg">
+          <TopBar />
+          <div style={{ position: 'relative', zIndex: 1 }}>
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/projects" element={<Projects />} />

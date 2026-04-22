@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import CompletionRing from './CompletionRing'
-import { categoryAccent, statusBadge, cn } from '../../lib/utils'
+import { categoryAccent } from '../../lib/utils'
 import type { Project, Task } from '../../lib/supabase'
 
 interface ProjectCardProps {
@@ -19,37 +19,72 @@ export default function ProjectCard({ project, tasks, isPrimary, isSecondary }: 
   return (
     <Link
       to={`/projects/${project.id}`}
-      className={cn(
-        'block rounded-xl border p-4 transition-all duration-200 hover:shadow-sm',
-        isPrimary
-          ? 'border-[rgba(92,122,92,0.35)] bg-[rgba(92,122,92,0.06)]'
-          : isSecondary
-          ? 'border-[rgba(139,127,109,0.15)] bg-[rgba(240,236,228,0.6)] opacity-80'
-          : 'border-[rgba(139,127,109,0.15)] bg-[rgba(240,236,228,0.6)]'
-      )}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        minHeight: '80px',
+        background: isPrimary ? 'rgba(107,124,92,0.06)' : 'var(--surface)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        border: isPrimary ? '1px solid rgba(107,124,92,0.2)' : '1px solid var(--border)',
+        borderRadius: 'var(--radius-sm)',
+        padding: '16px 20px',
+        textDecoration: 'none',
+        transition: 'box-shadow 200ms var(--ease-breath), transform 200ms var(--ease-breath)',
+        boxShadow: 'var(--shadow-sm)',
+        opacity: isSecondary && !isPrimary ? 0.78 : 1,
+      }}
+      onMouseEnter={e => {
+        const el = e.currentTarget as HTMLAnchorElement
+        el.style.boxShadow = 'var(--shadow-md)'
+        el.style.transform = 'translateY(-1px)'
+      }}
+      onMouseLeave={e => {
+        const el = e.currentTarget as HTMLAnchorElement
+        el.style.boxShadow = 'var(--shadow-sm)'
+        el.style.transform = 'translateY(0)'
+      }}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          {isPrimary && (
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--foundation)]" />
-              <span className="text-[var(--foundation)] text-xs font-medium tracking-wide">Primary this week</span>
-            </div>
-          )}
-          <h3 className="text-[#2b2b2b] text-sm font-medium leading-tight truncate">
-            {project.name}
-          </h3>
-          <div className="flex items-center gap-2 mt-1.5">
-            <span className={cn('text-xs px-1.5 py-0.5 rounded-md font-medium', statusBadge(project.status))}>
-              {project.status}
-            </span>
-            <span className="text-[#8a7f6d] text-xs">
-              {completedTasks.length}/{activeTasks.length} tasks
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {isPrimary && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+            <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'var(--foundation)', flexShrink: 0 }} />
+            <span style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '0.62rem',
+              fontWeight: 400,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: 'var(--foundation)',
+            }}>
+              Primary this week
             </span>
           </div>
-        </div>
-        <CompletionRing percent={percent} color={accent} size={46} />
+        )}
+        <h3 style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: '1rem',
+          fontWeight: 400,
+          color: 'var(--ink)',
+          letterSpacing: '0.02em',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          {project.name}
+        </h3>
+        <p style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: '0.75rem',
+          fontWeight: 300,
+          color: 'var(--ink-muted)',
+          marginTop: '3px',
+        }}>
+          {completedTasks.length}/{activeTasks.length} tasks
+        </p>
       </div>
+      <CompletionRing percent={percent} color={accent} size={44} />
     </Link>
   )
 }

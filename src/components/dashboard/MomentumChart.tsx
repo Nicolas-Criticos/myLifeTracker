@@ -1,5 +1,5 @@
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { format, parseISO } from 'date-fns'
 import type { DailyLog } from '../../lib/supabase'
@@ -18,42 +18,65 @@ export default function MomentumChart({ logs }: MomentumChartProps) {
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-24 text-[#64748b] text-sm">
-        No momentum data this week
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '80px',
+        fontFamily: 'var(--font-body)',
+        fontWeight: 300,
+        fontSize: '0.875rem',
+        color: 'var(--ink-muted)',
+        fontStyle: 'italic',
+      }}>
+        Today is day one. Come back tonight and log how it went.
       </div>
     )
   }
 
   return (
-    <ResponsiveContainer width="100%" height={80}>
-      <LineChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3a" />
+    <ResponsiveContainer width="100%" height={100}>
+      <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+        <defs>
+          <linearGradient id="oliveGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%"  stopColor="#6b7c5c" stopOpacity={0.22} />
+            <stop offset="95%" stopColor="#6b7c5c" stopOpacity={0} />
+          </linearGradient>
+        </defs>
         <XAxis
           dataKey="date"
-          tick={{ fill: '#64748b', fontSize: 11 }}
+          tick={{ fill: '#7a7568', fontSize: 11, fontFamily: 'var(--font-body)' }}
           axisLine={false}
           tickLine={false}
         />
         <YAxis
           domain={[0, 10]}
-          tick={{ fill: '#64748b', fontSize: 11 }}
+          tick={{ fill: '#7a7568', fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
         <Tooltip
-          contentStyle={{ background: '#1a1d27', border: '1px solid #2a2d3a', borderRadius: 6 }}
-          labelStyle={{ color: '#f1f5f9', fontSize: 12 }}
-          itemStyle={{ color: '#4ade80', fontSize: 12 }}
+          contentStyle={{
+            background: 'rgba(255,252,245,0.95)',
+            border: '1px solid rgba(44,42,37,0.08)',
+            borderRadius: '12px',
+            color: '#2c2a25',
+            fontSize: 12,
+            fontFamily: 'var(--font-body)',
+            boxShadow: '0 4px 24px rgba(44,42,37,0.08)',
+          }}
+          itemStyle={{ color: '#6b7c5c' }}
         />
-        <Line
+        <Area
           type="monotone"
           dataKey="score"
-          stroke="#4ade80"
-          strokeWidth={2}
-          dot={{ r: 3, fill: '#4ade80', strokeWidth: 0 }}
-          activeDot={{ r: 5 }}
+          stroke="#6b7c5c"
+          strokeWidth={1.5}
+          fill="url(#oliveGrad)"
+          dot={false}
+          activeDot={{ r: 3, fill: '#6b7c5c', stroke: 'none' }}
         />
-      </LineChart>
+      </AreaChart>
     </ResponsiveContainer>
   )
 }

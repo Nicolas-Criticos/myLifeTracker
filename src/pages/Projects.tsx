@@ -1,84 +1,187 @@
 import { useState } from 'react'
-import TopBar from '../components/layout/TopBar'
 import ProjectList from '../components/projects/ProjectList'
 import { useProjects, useTasks, useCommunityProjects, useCommunityProjectTasks } from '../lib/queries'
 import type { CommunityProject } from '../lib/supabase'
 
-const SURFACE = 'bg-[rgba(240,236,228,0.9)] border border-[rgba(139,127,109,0.15)] rounded-2xl'
-const LABEL = 'text-[#8a7f6d] text-xs uppercase tracking-widest'
+const LABEL: React.CSSProperties = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '0.65rem',
+  fontWeight: 400,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-muted)',
+}
+
+const statusColors: Record<string, { bg: string; text: string }> = {
+  active:    { bg: 'rgba(107,124,92,0.1)',  text: 'var(--foundation)' },
+  planning:  { bg: 'rgba(74,107,138,0.1)',  text: 'var(--leverage)' },
+  completed: { bg: 'rgba(44,42,37,0.06)',   text: 'var(--ink-muted)' },
+  paused:    { bg: 'rgba(201,168,76,0.12)', text: 'var(--gold)' },
+}
 
 function FarmProjectTasks({ projectId }: { projectId: string }) {
   const { data: tasks = [], isLoading } = useCommunityProjectTasks(projectId)
 
   if (isLoading) {
-    return <p className="text-[#8a7f6d] text-xs py-2">Loading tasks…</p>
+    return <p style={{ ...LABEL, fontStyle: 'italic', textTransform: 'none', paddingTop: '8px' }}>Loading tasks…</p>
   }
   if (tasks.length === 0) {
-    return <p className="text-[#8a7f6d] text-xs py-2">No tasks yet</p>
+    return (
+      <p style={{
+        fontFamily: 'var(--font-body)',
+        fontWeight: 300,
+        fontSize: '0.82rem',
+        color: 'var(--ink-muted)',
+        fontStyle: 'italic',
+        paddingTop: '4px',
+      }}>
+        No tasks yet.
+      </p>
+    )
   }
 
-  const statusColor: Record<string, string> = {
-    done: 'bg-[rgba(92,122,92,0.12)] text-[#5c7a5c]',
-    in_progress: 'bg-[rgba(74,107,138,0.12)] text-[#4a6b8a]',
-    pending: 'bg-[rgba(139,127,109,0.1)] text-[#8a7f6d]',
+  const taskStatusColors: Record<string, { bg: string; text: string }> = {
+    done:        { bg: 'rgba(107,124,92,0.1)',  text: 'var(--foundation)' },
+    in_progress: { bg: 'rgba(74,107,138,0.1)',  text: 'var(--leverage)' },
+    pending:     { bg: 'rgba(44,42,37,0.06)',   text: 'var(--ink-muted)' },
   }
 
   return (
-    <div className="space-y-1.5 pt-1">
-      {tasks.map(task => (
-        <div key={task.id} className="flex items-center gap-3 py-2 border-b border-[rgba(139,127,109,0.08)] last:border-0">
-          <span className="text-[#2b2b2b] text-sm flex-1">{task.name}</span>
-          {task.status && (
-            <span className={`text-xs px-2 py-0.5 rounded-lg ${statusColor[task.status] ?? statusColor.pending}`}>
-              {task.status.replace(/_/g, ' ')}
+    <div>
+      {tasks.map((task, i) => {
+        const sc = taskStatusColors[task.status ?? 'pending'] ?? taskStatusColors.pending
+        return (
+          <div
+            key={task.id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '10px 0',
+              borderBottom: i < tasks.length - 1 ? '1px solid var(--border)' : 'none',
+            }}
+          >
+            <div style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              background: sc.text,
+              flexShrink: 0,
+              opacity: 0.6,
+            }} />
+            <span style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: '0.85rem',
+              fontWeight: 300,
+              color: 'var(--ink)',
+              flex: 1,
+            }}>
+              {task.name}
             </span>
-          )}
-        </div>
-      ))}
+            {task.status && (
+              <span style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.62rem',
+                fontWeight: 400,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: sc.text,
+                background: sc.bg,
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-full)',
+                flexShrink: 0,
+              }}>
+                {task.status.replace(/_/g, ' ')}
+              </span>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
 
 function FarmProjectCard({ project }: { project: CommunityProject }) {
   const [open, setOpen] = useState(false)
-
-  const statusColor: Record<string, string> = {
-    active: 'bg-[rgba(92,122,92,0.12)] text-[#5c7a5c]',
-    planning: 'bg-[rgba(74,107,138,0.12)] text-[#4a6b8a]',
-    completed: 'bg-[rgba(139,127,109,0.1)] text-[#8a7f6d]',
-    paused: 'bg-[rgba(138,106,58,0.1)] text-[#8a6a3a]',
-  }
+  const sc = statusColors[project.status ?? 'planning'] ?? statusColors.planning
 
   return (
-    <div className={`${SURFACE} overflow-hidden`}>
+    <div style={{
+      background: 'rgba(255,248,240,0.75)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      border: '1px solid var(--border-warm)',
+      borderRadius: 'var(--radius-md)',
+      overflow: 'hidden',
+      boxShadow: 'var(--shadow-sm)',
+      transition: 'box-shadow 200ms var(--ease-breath)',
+    }}>
       <div
-        className="p-6 cursor-pointer hover:bg-[rgba(139,127,109,0.04)] transition-colors"
+        style={{ padding: '20px 24px', cursor: 'pointer' }}
         onClick={() => setOpen(o => !o)}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2.5 mb-1.5">
-              <h3 className="text-[#2b2b2b] text-base font-light tracking-wide">{project.title}</h3>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <h3 style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: '1.1rem',
+                fontWeight: 400,
+                color: 'var(--ink)',
+                letterSpacing: '0.02em',
+              }}>
+                {project.title}
+              </h3>
               {project.status && (
-                <span className={`text-xs px-2 py-0.5 rounded-lg shrink-0 ${statusColor[project.status] ?? statusColor.planning}`}>
+                <span style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '0.62rem',
+                  fontWeight: 400,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: sc.text,
+                  background: sc.bg,
+                  padding: '2px 8px',
+                  borderRadius: 'var(--radius-full)',
+                  flexShrink: 0,
+                }}>
                   {project.status}
                 </span>
               )}
             </div>
             {project.description && (
-              <p className="text-[#8a7f6d] text-sm leading-relaxed">{project.description}</p>
+              <p style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.82rem',
+                fontWeight: 300,
+                color: 'var(--ink-muted)',
+                lineHeight: 1.55,
+              }}>
+                {project.description}
+              </p>
             )}
             {project.timeline && (
-              <p className="text-[#8a7f6d] text-xs mt-2 tracking-wide">Timeline: {project.timeline}</p>
+              <p style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.72rem',
+                fontWeight: 300,
+                color: 'var(--clay)',
+                marginTop: '6px',
+                letterSpacing: '0.03em',
+              }}>
+                Timeline: {project.timeline}
+              </p>
             )}
           </div>
-          <span className="text-[#8a7f6d] text-xs mt-1 shrink-0">{open ? '▲' : '▼'}</span>
+          <span style={{ color: 'var(--ink-muted)', fontSize: '0.7rem', flexShrink: 0, marginTop: '4px' }}>
+            {open ? '▲' : '▼'}
+          </span>
         </div>
       </div>
 
       {open && (
-        <div className="border-t border-[rgba(139,127,109,0.12)] px-6 pb-5 pt-4">
-          <p className={`${LABEL} mb-3`}>Tasks</p>
+        <div style={{ borderTop: '1px solid var(--border-warm)', padding: '16px 24px 20px' }}>
+          <p style={{ ...LABEL, marginBottom: '12px' }}>Tasks</p>
           <FarmProjectTasks projectId={project.id} />
         </div>
       )}
@@ -92,57 +195,79 @@ export default function Projects() {
   const { data: farmProjects = [], isLoading: loadingFarm } = useCommunityProjects('vrischgewagt')
 
   return (
-    <div className="flex flex-col h-full">
-      <TopBar title="Projects" />
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-8 py-10 space-y-12 animate-fade-in">
+    <div className="animate-in" style={{ maxWidth: '1100px', margin: '0 auto', padding: '48px 40px 80px' }}>
 
-          {/* My Projects — ops_projects */}
-          <section>
-            <div className="flex items-center gap-3 mb-7">
-              {/* Small circle motif */}
-              <div className="relative w-6 h-6 flex items-center justify-center shrink-0">
-                <div className="absolute inset-0 rounded-full border border-[rgba(92,122,92,0.2)]" />
-                <div className="w-2 h-2 rounded-full bg-[rgba(92,122,92,0.4)]" />
-              </div>
-              <h2 className="text-[#2b2b2b] text-lg font-light tracking-[0.06em]">My Projects</h2>
-            </div>
-
-            {loadingProjects || loadingTasks ? (
-              <div className="text-[#8a7f6d] text-sm tracking-wide">Loading…</div>
-            ) : (
-              <ProjectList projects={projects} tasks={tasks} />
-            )}
-          </section>
-
-          {/* Farm Projects — community app */}
-          <section>
-            <div className="flex items-center gap-3 mb-7">
-              <div className="relative w-6 h-6 flex items-center justify-center shrink-0">
-                <div className="absolute inset-0 rounded-full border border-[rgba(92,122,92,0.2)]" />
-                <div className="w-2 h-2 rounded-full bg-[rgba(92,122,92,0.4)]" />
-              </div>
-              <h2 className="text-[#2b2b2b] text-lg font-light tracking-[0.06em]">Farm Projects</h2>
-              <span className="text-[#8a7f6d] text-xs tracking-wide">Vrischgewagt</span>
-            </div>
-
-            {loadingFarm ? (
-              <div className="text-[#8a7f6d] text-sm tracking-wide">Loading…</div>
-            ) : farmProjects.length === 0 ? (
-              <div className={`${SURFACE} p-6`}>
-                <p className="text-[#8a7f6d] text-sm">No farm projects found for realm "vrischgewagt".</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {farmProjects.map(project => (
-                  <FarmProjectCard key={project.id} project={project} />
-                ))}
-              </div>
-            )}
-          </section>
-
+      {/* My Projects */}
+      <section style={{ marginBottom: '72px' }}>
+        <div style={{ marginBottom: '32px' }}>
+          <h2 style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 300,
+            fontSize: '1.6rem',
+            color: 'var(--ink)',
+            letterSpacing: '0.04em',
+            marginBottom: '4px',
+          }}>
+            My Projects
+          </h2>
+          <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: '0.82rem', color: 'var(--ink-muted)' }}>
+            Foundation · Leverage · Expression
+          </p>
         </div>
-      </main>
+
+        {loadingProjects || loadingTasks ? (
+          <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, color: 'var(--ink-muted)', fontStyle: 'italic' }}>
+            Loading…
+          </p>
+        ) : (
+          <ProjectList projects={projects} tasks={tasks} />
+        )}
+      </section>
+
+      {/* Farm Projects */}
+      <section>
+        <div style={{ marginBottom: '32px' }}>
+          <h2 style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 300,
+            fontSize: '1.6rem',
+            color: 'var(--ink)',
+            letterSpacing: '0.04em',
+            marginBottom: '4px',
+          }}>
+            Farm Projects
+          </h2>
+          <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: '0.82rem', color: 'var(--clay)' }}>
+            Vrischgewagt · Active projects
+          </p>
+        </div>
+
+        {loadingFarm ? (
+          <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, color: 'var(--ink-muted)', fontStyle: 'italic' }}>
+            Loading…
+          </p>
+        ) : farmProjects.length === 0 ? (
+          <div className="card" style={{ textAlign: 'center', padding: '48px 32px' }}>
+            <p style={{
+              fontFamily: 'var(--font-body)',
+              fontWeight: 300,
+              fontSize: '0.95rem',
+              color: 'var(--ink-muted)',
+              fontStyle: 'italic',
+              lineHeight: 1.6,
+            }}>
+              No active farm projects right now.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {farmProjects.map(project => (
+              <FarmProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+        )}
+      </section>
+
     </div>
   )
 }

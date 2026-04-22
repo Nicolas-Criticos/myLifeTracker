@@ -1,13 +1,30 @@
-import TopBar from '../components/layout/TopBar'
 import PatternAlert from '../components/dashboard/PatternAlert'
 import { usePatterns, useDailyLogs, useWeeklyReviews } from '../lib/queries'
 import { format, parseISO } from 'date-fns'
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
 
-const SURFACE = 'bg-[rgba(240,236,228,0.9)] border border-[rgba(139,127,109,0.15)] rounded-2xl'
-const LABEL = 'text-[#8a7f6d] text-xs uppercase tracking-widest'
+const LABEL: React.CSSProperties = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '0.62rem',
+  fontWeight: 400,
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  color: 'var(--ink-muted)',
+}
+
+const TOOLTIP_STYLE = {
+  contentStyle: {
+    background: 'rgba(255,252,245,0.95)',
+    border: '1px solid rgba(44,42,37,0.08)',
+    borderRadius: '12px',
+    color: '#2c2a25',
+    fontSize: 11,
+    fontFamily: 'var(--font-body)',
+    boxShadow: '0 4px 24px rgba(44,42,37,0.08)',
+  },
+}
 
 export default function Insights() {
   const { data: allPatterns = [], isLoading: loadingPatterns } = usePatterns()
@@ -41,150 +58,257 @@ export default function Insights() {
     count,
   }))
 
-  const tooltipStyle = {
-    contentStyle: {
-      background: '#f0ece4',
-      border: '1px solid rgba(139,127,109,0.2)',
-      borderRadius: 10,
-      color: '#2b2b2b',
-      fontSize: 11,
-    },
+  if (allPatterns.length === 0 && !loadingPatterns && trendData.length === 0) {
+    return (
+      <div className="animate-in" style={{ maxWidth: '1100px', margin: '0 auto', padding: '48px 40px 80px' }}>
+        <div style={{ marginBottom: '48px' }}>
+          <h2 style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 300,
+            fontSize: '1.6rem',
+            color: 'var(--ink)',
+            letterSpacing: '0.04em',
+            marginBottom: '4px',
+          }}>
+            Insights
+          </h2>
+        </div>
+        <div className="card" style={{ textAlign: 'center', padding: '64px 40px' }}>
+          <p style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 300,
+            fontSize: '1.3rem',
+            color: 'var(--ink)',
+            letterSpacing: '0.04em',
+            marginBottom: '12px',
+          }}>
+            Patterns emerge over time.
+          </p>
+          <p style={{
+            fontFamily: 'var(--font-body)',
+            fontWeight: 300,
+            fontSize: '0.875rem',
+            color: 'var(--ink-muted)',
+            lineHeight: 1.7,
+          }}>
+            Keep checking in and logging your days. Something will surface.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <TopBar title="Insights" />
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-8 py-10 space-y-8 animate-fade-in">
+    <div className="animate-in" style={{ maxWidth: '1100px', margin: '0 auto', padding: '48px 40px 80px' }}>
 
-          {/* Active patterns */}
-          <div className={SURFACE + ' p-7'}>
-            <div className="flex items-center gap-2.5 mb-5">
-              <p className={LABEL}>Active Patterns</p>
-              {activePatterns.length > 0 && (
-                <span className="bg-[rgba(138,106,58,0.12)] text-[#8a6a3a] text-xs px-1.5 py-0.5 rounded-lg">
-                  {activePatterns.length}
-                </span>
-              )}
-            </div>
-            {activePatterns.length === 0 ? (
-              <p className="text-[#8a7f6d] text-sm">No active patterns — system is clean</p>
-            ) : (
-              <div className="space-y-3">
-                {activePatterns.map(p => (
-                  <PatternAlert key={p.id} pattern={p} />
-                ))}
-              </div>
+      {/* Page title */}
+      <div style={{ marginBottom: '40px' }}>
+        <h2 style={{
+          fontFamily: 'var(--font-display)',
+          fontWeight: 300,
+          fontSize: '1.6rem',
+          color: 'var(--ink)',
+          letterSpacing: '0.04em',
+          marginBottom: '4px',
+        }}>
+          Insights
+        </h2>
+        <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: '0.82rem', color: 'var(--ink-muted)' }}>
+          What the data is telling you.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+        {/* Active patterns */}
+        <div className="card" style={{ padding: '28px 32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <p style={LABEL}>Active Patterns</p>
+            {activePatterns.length > 0 && (
+              <span style={{
+                background: 'var(--clay-muted)',
+                color: 'var(--clay)',
+                fontSize: '0.68rem',
+                fontFamily: 'var(--font-body)',
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-full)',
+              }}>
+                {activePatterns.length}
+              </span>
             )}
           </div>
-
-          {/* Momentum trend */}
-          {trendData.length > 0 && (
-            <div className={SURFACE + ' p-7'}>
-              <p className={`${LABEL} mb-6`}>Daily Momentum — last 14 days</p>
-              <ResponsiveContainer width="100%" height={140}>
-                <BarChart data={trendData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(139,127,109,0.12)" vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    tick={{ fill: '#8a7f6d', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    domain={[0, 10]}
-                    tick={{ fill: '#8a7f6d', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip {...tooltipStyle} itemStyle={{ color: '#5c7a5c' }} />
-                  <Bar dataKey="momentum" fill="#5c7a5c" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+          {activePatterns.length === 0 ? (
+            <p style={{
+              fontFamily: 'var(--font-body)',
+              fontWeight: 300,
+              fontSize: '0.875rem',
+              color: 'var(--ink-muted)',
+              fontStyle: 'italic',
+            }}>
+              Nothing to flag right now — keep going.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {activePatterns.map(p => <PatternAlert key={p.id} pattern={p} />)}
             </div>
           )}
-
-          {/* Weekly completion */}
-          {completionData.length > 0 && (
-            <div className={SURFACE + ' p-7'}>
-              <p className={`${LABEL} mb-6`}>Weekly Completion Rate (%)</p>
-              <ResponsiveContainer width="100%" height={140}>
-                <BarChart data={completionData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(139,127,109,0.12)" vertical={false} />
-                  <XAxis
-                    dataKey="week"
-                    tick={{ fill: '#8a7f6d', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    domain={[0, 100]}
-                    tick={{ fill: '#8a7f6d', fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <Tooltip {...tooltipStyle} itemStyle={{ color: '#4a6b8a' }} />
-                  <Bar dataKey="rate" fill="#4a6b8a" radius={[4, 4, 0, 0]} name="Completion %" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {/* Pattern distribution */}
-          {patternDistribution.length > 0 && (
-            <div className={SURFACE + ' p-7'}>
-              <p className={`${LABEL} mb-6`}>Pattern History ({allPatterns.length} total)</p>
-              <div className="space-y-3">
-                {patternDistribution.map(({ type, count }) => (
-                  <div key={type} className="flex items-center gap-4">
-                    <span className="text-[#2b2b2b] text-sm capitalize flex-1">{type}</span>
-                    <div className="flex-1 bg-[rgba(139,127,109,0.12)] rounded-full h-1.5 overflow-hidden">
-                      <div
-                        className="bg-[#8a6a3a] h-full rounded-full"
-                        style={{ width: `${(count / allPatterns.length) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-[#8a7f6d] text-xs w-5 text-right">{count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Acknowledged patterns */}
-          {allPatterns.filter(p => p.acknowledged).length > 0 && (
-            <div className={SURFACE + ' p-7'}>
-              <p className={`${LABEL} mb-5`}>Acknowledged Patterns</p>
-              <div className="space-y-2">
-                {allPatterns.filter(p => p.acknowledged).map(p => (
-                  <div key={p.id} className="flex items-start gap-3 py-3 border-b border-[rgba(139,127,109,0.08)] last:border-0 opacity-60">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[#8a7f6d] text-xs capitalize">
-                          {p.pattern_type.replace(/_/g, ' ')}
-                        </span>
-                        <span className="text-[#8a7f6d] text-xs">·</span>
-                        <span className="text-[#8a7f6d] text-xs">
-                          {format(parseISO(p.detected_at), 'MMM d')}
-                        </span>
-                      </div>
-                      <p className="text-[#2b2b2b] text-sm mt-1 leading-relaxed">{p.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {allPatterns.length === 0 && !loadingPatterns && (
-            <div className="text-center py-16">
-              <p className="text-[#8a7f6d] text-sm tracking-wide">No patterns detected yet.</p>
-              <p className="text-[#8a7f6d] text-xs mt-1">Patterns will appear as you log daily activity.</p>
-            </div>
-          )}
-
         </div>
-      </main>
+
+        {/* Momentum trend */}
+        {trendData.length > 0 && (
+          <div className="card" style={{ padding: '28px 32px' }}>
+            <p style={{ ...LABEL, marginBottom: '20px' }}>Daily Momentum — last 14 days</p>
+            <ResponsiveContainer width="100%" height={140}>
+              <AreaChart data={trendData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="momentumGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#6b7c5c" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#6b7c5c" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(44,42,37,0.05)" vertical={false} />
+                <XAxis dataKey="date" tick={{ fill: '#7a7568', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 10]} tick={{ fill: '#7a7568', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip {...TOOLTIP_STYLE} itemStyle={{ color: 'var(--olive)' }} />
+                <Area
+                  type="monotone"
+                  dataKey="momentum"
+                  stroke="#6b7c5c"
+                  strokeWidth={1.5}
+                  fill="url(#momentumGrad)"
+                  dot={false}
+                  activeDot={{ r: 3, fill: '#6b7c5c', stroke: 'none' }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Weekly completion */}
+        {completionData.length > 0 && (
+          <div className="card" style={{ padding: '28px 32px' }}>
+            <p style={{ ...LABEL, marginBottom: '20px' }}>Weekly Completion Rate (%)</p>
+            <ResponsiveContainer width="100%" height={140}>
+              <AreaChart data={completionData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="completionGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#4a6b8a" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#4a6b8a" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(44,42,37,0.05)" vertical={false} />
+                <XAxis dataKey="week" tick={{ fill: '#7a7568', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fill: '#7a7568', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <Tooltip {...TOOLTIP_STYLE} itemStyle={{ color: 'var(--leverage)' }} />
+                <Area
+                  type="monotone"
+                  dataKey="rate"
+                  name="Completion %"
+                  stroke="#4a6b8a"
+                  strokeWidth={1.5}
+                  fill="url(#completionGrad)"
+                  dot={false}
+                  activeDot={{ r: 3, fill: '#4a6b8a', stroke: 'none' }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Pattern distribution */}
+        {patternDistribution.length > 0 && (
+          <div className="card" style={{ padding: '28px 32px' }}>
+            <p style={{ ...LABEL, marginBottom: '20px' }}>
+              Pattern History ({allPatterns.length} total)
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {patternDistribution.map(({ type, count }) => (
+                <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <span style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.82rem',
+                    fontWeight: 300,
+                    color: 'var(--ink)',
+                    textTransform: 'capitalize',
+                    flex: '0 0 160px',
+                  }}>
+                    {type}
+                  </span>
+                  <div style={{
+                    flex: 1,
+                    height: '3px',
+                    background: 'var(--border)',
+                    borderRadius: 'var(--radius-full)',
+                    overflow: 'hidden',
+                  }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${(count / allPatterns.length) * 100}%`,
+                      background: 'var(--clay)',
+                      borderRadius: 'var(--radius-full)',
+                      opacity: 0.65,
+                    }} />
+                  </div>
+                  <span style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.72rem',
+                    fontWeight: 300,
+                    color: 'var(--ink-muted)',
+                    width: '20px',
+                    textAlign: 'right',
+                  }}>
+                    {count}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Acknowledged patterns */}
+        {allPatterns.filter(p => p.acknowledged).length > 0 && (
+          <div className="card" style={{ padding: '28px 32px', opacity: 0.7 }}>
+            <p style={{ ...LABEL, marginBottom: '16px' }}>Acknowledged</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {allPatterns.filter(p => p.acknowledged).map((p, i, arr) => (
+                <div
+                  key={p.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '12px',
+                    padding: '12px 0',
+                    borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{
+                        fontFamily: 'var(--font-body)',
+                        fontSize: '0.62rem',
+                        fontWeight: 400,
+                        letterSpacing: '0.1em',
+                        textTransform: 'uppercase',
+                        color: 'var(--ink-muted)',
+                      }}>
+                        {p.pattern_type.replace(/_/g, ' ')}
+                      </span>
+                      <span style={{ color: 'var(--ink-faint)', fontSize: '0.7rem' }}>·</span>
+                      <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.7rem', fontWeight: 300, color: 'var(--ink-muted)' }}>
+                        {format(parseISO(p.detected_at), 'MMM d')}
+                      </span>
+                    </div>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.82rem', fontWeight: 300, color: 'var(--ink)', lineHeight: 1.5 }}>
+                      {p.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   )
 }

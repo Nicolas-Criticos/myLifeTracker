@@ -5,7 +5,7 @@ interface CompletionRingProps {
 }
 
 export default function CompletionRing({ percent, color, size = 48 }: CompletionRingProps) {
-  const r = (size - 6) / 2
+  const r = (size - 4) / 2
   const circumference = 2 * Math.PI * r
   const offset = circumference - (percent / 100) * circumference
 
@@ -16,8 +16,8 @@ export default function CompletionRing({ percent, color, size = 48 }: Completion
         cy={size / 2}
         r={r}
         fill="none"
-        stroke="#2a2d3a"
-        strokeWidth={5}
+        stroke="var(--border)"
+        strokeWidth={2}
       />
       <circle
         cx={size / 2}
@@ -25,20 +25,22 @@ export default function CompletionRing({ percent, color, size = 48 }: Completion
         r={r}
         fill="none"
         stroke={color}
-        strokeWidth={5}
+        strokeWidth={2}
         strokeDasharray={circumference}
         strokeDashoffset={offset}
         strokeLinecap="round"
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        style={{ opacity: 0.7 }}
       />
       <text
         x="50%"
         y="50%"
         dominantBaseline="middle"
         textAnchor="middle"
-        fontSize={size < 50 ? '10' : '12'}
-        fill="#f1f5f9"
-        fontFamily="Inter, sans-serif"
+        fontSize={size < 50 ? '9' : '11'}
+        fill="var(--ink-muted)"
+        fontFamily="var(--font-body)"
+        fontWeight="300"
       >
         {Math.round(percent)}%
       </text>

@@ -393,6 +393,8 @@ export function useCommunityProjects(realm: string) {
         .from('projects')
         .select('*')
         .eq('realm', realm)
+        .eq('archived', false)
+        .is('completed_at', null)
         .order('created_at', { ascending: false })
       if (error) throw error
       return data as CommunityProject[]

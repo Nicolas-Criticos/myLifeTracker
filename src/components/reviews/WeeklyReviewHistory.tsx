@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { format, parseISO, addDays } from 'date-fns'
 import { useProjects } from '../../lib/queries'
-import { cn } from '../../lib/utils'
 import type { WeeklyReview } from '../../lib/supabase'
 import WeeklyReviewForm from './WeeklyReviewForm'
 
@@ -9,10 +8,10 @@ interface WeeklyReviewHistoryProps {
   reviews: WeeklyReview[]
 }
 
-const actionColors: Record<string, string> = {
-  continue: 'bg-[#4ade80]/20 text-[#4ade80]',
-  shift: 'bg-[#60a5fa]/20 text-[#60a5fa]',
-  pause: 'bg-amber-400/20 text-amber-400',
+const actionStyle: Record<string, { bg: string; text: string }> = {
+  continue: { bg: 'var(--olive-muted)',          text: 'var(--olive)' },
+  shift:    { bg: 'rgba(74,107,138,0.12)',        text: 'var(--leverage)' },
+  pause:    { bg: 'var(--gold-muted)',            text: 'var(--gold)' },
 }
 
 export default function WeeklyReviewHistory({ reviews }: WeeklyReviewHistoryProps) {
@@ -20,79 +19,188 @@ export default function WeeklyReviewHistory({ reviews }: WeeklyReviewHistoryProp
   const [editing, setEditing] = useState<string | null>(null)
 
   if (reviews.length === 0) {
-    return <p className="text-[#64748b] text-sm py-8 text-center">No reviews yet</p>
+    return (
+      <div className="card" style={{ textAlign: 'center', padding: '48px 32px' }}>
+        <p style={{
+          fontFamily: 'var(--font-body)',
+          fontWeight: 300,
+          fontSize: '0.95rem',
+          color: 'var(--ink-muted)',
+          fontStyle: 'italic',
+          lineHeight: 1.6,
+        }}>
+          Your first weekly review is waiting to be written.
+        </p>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-4">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {reviews.map(review => {
         const weekEnd = addDays(parseISO(review.week_start), 6)
         const primary = projects.find(p => p.id === review.primary_project_id)
         const isEditing = editing === review.id
+        const ac = review.recommended_action ? actionStyle[review.recommended_action] : null
 
         return (
-          <div key={review.id} className="bg-[#1a1d27] border border-[#2a2d3a] rounded-lg overflow-hidden">
+          <div
+            key={review.id}
+            className="card"
+            style={{ padding: '24px 28px', overflow: 'hidden' }}
+          >
             {/* Header */}
-            <div className="flex items-start justify-between gap-4 p-4">
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '16px' }}>
               <div>
-                <p className="text-[#f1f5f9] text-sm font-medium">
+                <p style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 300,
+                  fontSize: '1.05rem',
+                  color: 'var(--ink)',
+                  letterSpacing: '0.04em',
+                }}>
                   {format(parseISO(review.week_start), 'MMM d')} – {format(weekEnd, 'MMM d, yyyy')}
                 </p>
                 {primary && (
-                  <p className="text-[#64748b] text-xs mt-0.5">Primary: {primary.name}</p>
+                  <p style={{
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 300,
+                    fontSize: '0.78rem',
+                    color: 'var(--ink-muted)',
+                    marginTop: '3px',
+                  }}>
+                    {primary.name}
+                  </p>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 {review.completion_rate != null && (
-                  <span className="text-[#f1f5f9] text-sm font-semibold">
+                  <span style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: '1.2rem',
+                    fontWeight: 300,
+                    color: 'var(--ink)',
+                  }}>
                     {Math.round(review.completion_rate)}%
                   </span>
                 )}
-                {review.recommended_action && (
-                  <span className={cn('text-xs px-2 py-1 rounded capitalize font-medium', actionColors[review.recommended_action] ?? 'bg-[#2a2d3a] text-[#64748b]')}>
+                {ac && review.recommended_action && (
+                  <span style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.62rem',
+                    fontWeight: 400,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    color: ac.text,
+                    background: ac.bg,
+                    padding: '3px 10px',
+                    borderRadius: 'var(--radius-full)',
+                  }}>
                     {review.recommended_action}
                   </span>
                 )}
                 <button
                   onClick={() => setEditing(isEditing ? null : review.id)}
-                  className="text-xs text-[#64748b] hover:text-[#f1f5f9] px-2 py-1 rounded hover:bg-white/5 transition-colors"
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--border)',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.68rem',
+                    fontWeight: 300,
+                    color: 'var(--ink-muted)',
+                    padding: '4px 12px',
+                    borderRadius: 'var(--radius-full)',
+                    transition: 'all 200ms',
+                    letterSpacing: '0.04em',
+                  }}
                 >
                   {isEditing ? 'Close' : 'Edit'}
                 </button>
               </div>
             </div>
 
-            {/* Body */}
+            {/* Body — read view */}
             {!isEditing && (
-              <div className="px-4 pb-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 32px' }}>
                 {review.what_completed && (
                   <div>
-                    <p className="text-[#64748b] text-xs uppercase tracking-wide mb-1">Completed</p>
-                    <p className="text-[#f1f5f9] text-sm whitespace-pre-line">{review.what_completed}</p>
+                    <p style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '0.6rem',
+                      fontWeight: 400,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: 'var(--ink-muted)',
+                      marginBottom: '6px',
+                    }}>Completed</p>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.82rem', fontWeight: 300, color: 'var(--ink)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                      {review.what_completed}
+                    </p>
                   </div>
                 )}
                 {review.what_failed && (
                   <div>
-                    <p className="text-[#64748b] text-xs uppercase tracking-wide mb-1">Failed / Blocked</p>
-                    <p className="text-[#f1f5f9] text-sm whitespace-pre-line">{review.what_failed}</p>
+                    <p style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '0.6rem',
+                      fontWeight: 400,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: 'var(--ink-muted)',
+                      marginBottom: '6px',
+                    }}>Blocked</p>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.82rem', fontWeight: 300, color: 'var(--ink)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                      {review.what_failed}
+                    </p>
                   </div>
                 )}
                 {review.key_lessons && (
-                  <div className="md:col-span-2">
-                    <p className="text-[#64748b] text-xs uppercase tracking-wide mb-1">Key Lessons</p>
-                    <p className="text-[#f1f5f9] text-sm whitespace-pre-line">{review.key_lessons}</p>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <p style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '0.6rem',
+                      fontWeight: 400,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: 'var(--ink-muted)',
+                      marginBottom: '6px',
+                    }}>Key Lessons</p>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.82rem', fontWeight: 300, color: 'var(--ink)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                      {review.key_lessons}
+                    </p>
                   </div>
                 )}
                 {review.next_week_focus && (
-                  <div className="md:col-span-2">
-                    <p className="text-[#64748b] text-xs uppercase tracking-wide mb-1">Next Week</p>
-                    <p className="text-[#f1f5f9] text-sm whitespace-pre-line">{review.next_week_focus}</p>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <p style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '0.6rem',
+                      fontWeight: 400,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: 'var(--ink-muted)',
+                      marginBottom: '6px',
+                    }}>Next Week</p>
+                    <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.82rem', fontWeight: 300, color: 'var(--ink)', lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+                      {review.next_week_focus}
+                    </p>
                   </div>
                 )}
                 {review.momentum_score != null && (
                   <div>
-                    <p className="text-[#64748b] text-xs uppercase tracking-wide mb-1">Momentum</p>
-                    <p className="text-[#f1f5f9] text-sm">{review.momentum_score}/10</p>
+                    <p style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '0.6rem',
+                      fontWeight: 400,
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: 'var(--ink-muted)',
+                      marginBottom: '6px',
+                    }}>Momentum</p>
+                    <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: 300, color: 'var(--ink)' }}>
+                      {review.momentum_score}/10
+                    </p>
                   </div>
                 )}
               </div>
@@ -100,7 +208,7 @@ export default function WeeklyReviewHistory({ reviews }: WeeklyReviewHistoryProp
 
             {/* Edit form */}
             {isEditing && (
-              <div className="px-4 pb-4 border-t border-[#2a2d3a] pt-4">
+              <div style={{ paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
                 <WeeklyReviewForm existing={review} onClose={() => setEditing(null)} />
               </div>
             )}
