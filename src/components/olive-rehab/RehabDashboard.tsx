@@ -1,11 +1,14 @@
+import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import OliveTree from './OliveTree'
 import SeasonIndicator from './SeasonIndicator'
+import BlockDetailModal from './BlockDetailModal'
 import {
   useTreeHealthScore, useRehabBlocks, useRehabLogs, useCurrentMonthPlan,
   useRehabMilestones, ACTIVITY_LABELS,
 } from '../../lib/rehab-queries'
 import { nowInSAST } from '../../lib/utils'
+import type { RehabBlock } from '../../lib/supabase'
 
 const LABEL: React.CSSProperties = {
   fontFamily: 'var(--font-body)',
@@ -64,6 +67,7 @@ function StatusPill({ status }: { status: string }) {
 }
 
 export default function RehabDashboard() {
+  const [selectedBlock, setSelectedBlock] = useState<RehabBlock | null>(null)
   const healthScore = useTreeHealthScore(10)
   const { data: blocks = [] }  = useRehabBlocks()
   const { data: allLogs = [] } = useRehabLogs(90) // enough for monthly stats + display
@@ -178,14 +182,18 @@ export default function RehabDashboard() {
           {blockProgress.map(({ block, pct, done, total }) => {
             const isActive = block.irrigation_status === 'restored' || block.irrigation_status === 'active'
             return (
-              <div key={block.id} style={{
-                background: isActive ? 'rgba(90, 114, 71, 0.07)' : 'rgba(44, 42, 37, 0.03)',
-                borderRadius: 'var(--radius-sm)',
-                padding: '14px 12px',
-                textAlign: 'center',
-                border: `1px solid ${isActive ? 'rgba(90, 114, 71, 0.14)' : 'rgba(44, 42, 37, 0.05)'}`,
-                transition: 'all 300ms ease',
-              }}>
+              <div
+                key={block.id}
+                onClick={() => setSelectedBlock(block)}
+                style={{
+                  background: isActive ? 'rgba(90, 114, 71, 0.07)' : 'rgba(44, 42, 37, 0.03)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '14px 12px',
+                  textAlign: 'center',
+                  border: `1px solid ${isActive ? 'rgba(90, 114, 71, 0.14)' : 'rgba(44, 42, 37, 0.05)'}`,
+                  transition: 'all 300ms ease',
+                  cursor: 'pointer',
+                }}>
                 <p style={{
                   fontFamily: 'var(--font-display)',
                   fontSize: '0.95rem',
@@ -447,6 +455,14 @@ export default function RehabDashboard() {
             })}
           </div>
         </div>
+      )}
+
+      {/* Block Detail Modal */}
+      {selectedBlock && (
+        <BlockDetailModal
+          block={selectedBlock}
+          onClose={() => setSelectedBlock(null)}
+        />
       )}
     </div>
   )
