@@ -4,6 +4,7 @@ import { nowInSAST } from '../../lib/utils'
 
 const nav = [
   { to: '/', label: 'Dashboard', end: true },
+  { to: '/todos', label: 'To-Dos' },
   { to: '/journal', label: 'Journal' },
   { to: '/projects', label: 'Projects' },
   { to: '/reviews', label: 'Reviews' },
