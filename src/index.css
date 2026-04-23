@@ -156,6 +156,78 @@ body {
   animation: fadeSlideUp 500ms var(--ease-breath) forwards;
 }
 
+/* ── OLIVE REALM ─────────────────────────────────────────────────────────── */
+
+.olive-bg {
+  position: relative;
+  min-height: 100vh;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 30%,
+    rgba(228, 235, 210, 1) 0%,
+    rgba(235, 240, 220, 0.97) 40%,
+    rgba(240, 244, 228, 0.95) 100%
+  );
+}
+
+.olive-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 65% 45% at 25% 25%, rgba(90, 114, 71, 0.1) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 75% 65%, rgba(107, 124, 92, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 35% at 50% 45%, rgba(140, 160, 110, 0.06) 0%, transparent 50%);
+  animation: oliveBreath 18s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes oliveBreath {
+  0%   { opacity: 0.6; transform: scale(1); }
+  33%  { opacity: 1; transform: scale(1.025); }
+  66%  { opacity: 0.8; transform: scale(0.99); }
+  100% { opacity: 0.95; transform: scale(1.015); }
+}
+
+/* Tree animations */
+@keyframes treeSway {
+  0%, 100% { transform: rotate(-0.6deg) translateX(-0.5px); }
+  50%       { transform: rotate(0.6deg) translateX(0.5px); }
+}
+
+@keyframes leafRustle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  20%  { transform: scale(1.025) rotate(0.4deg); }
+  50%  { transform: scale(0.985) rotate(-0.3deg); }
+  80%  { transform: scale(1.015) rotate(0.2deg); }
+}
+
+@keyframes pollenFloat {
+  0%   { transform: translateY(0) translateX(0); opacity: 0.8; }
+  100% { transform: translateY(-90px) translateX(var(--pollen-drift, 12px)); opacity: 0; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(1.04); }
+}
+
+@keyframes leafAppear {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.tree-canopy {
+  animation: treeSway 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: 180px 420px;
+}
+
+.leaf-cluster {
+  animation: leafRustle 6s ease-in-out infinite;
+}
+.leaf-cluster:nth-child(odd)  { animation-duration: 7.2s; animation-delay: -1.8s; }
+.leaf-cluster:nth-child(even) { animation-duration: 5.6s; animation-delay: -3.1s; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -164,3 +236,83 @@ body {
 
 /* Selection */
 ::selection { background: rgba(107, 124, 92, 0.2); color: var(--ink); }
+
+/* ── Olive Realm ───────────────────────────────────────────────────────────── */
+
+body.olive-realm .samsara-bg {
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 30%,
+    rgba(220, 230, 210, 1) 0%,
+    rgba(235, 240, 225, 0.97) 40%,
+    rgba(230, 235, 218, 0.95) 100%
+  );
+}
+
+body.olive-realm .samsara-bg::before {
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 20%, rgba(90, 114, 71, 0.1) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 80% 70%, rgba(107, 140, 82, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(130, 160, 100, 0.06) 0%, transparent 50%);
+  animation: oliveBreath var(--duration-ambient) ease-in-out infinite alternate;
+}
+
+@keyframes oliveBreath {
+  0%   { opacity: 0.5; transform: scale(1); }
+  33%  { opacity: 0.85; transform: scale(1.02); }
+  66%  { opacity: 0.65; transform: scale(0.99); }
+  100% { opacity: 0.95; transform: scale(1.01); }
+}
+
+body.olive-realm header {
+  background: rgba(235, 240, 225, 0.85) !important;
+}
+
+/* ── Olive Tree Animations ─────────────────────────────────────────────────── */
+
+@keyframes leafSway {
+  0%   { transform: translateX(0) rotate(0deg); }
+  100% { transform: translateX(1.5px) rotate(2deg); }
+}
+
+@keyframes oliveBob {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(1px); }
+}
+
+@keyframes leafFall {
+  0%   { opacity: 0.4; transform: translateY(0) rotate(0deg); }
+  50%  { opacity: 0.3; transform: translateY(30px) translateX(10px) rotate(120deg); }
+  100% { opacity: 0; transform: translateY(60px) translateX(20px) rotate(240deg); }
+}
+
+@keyframes treeGlow {
+  0%   { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+@keyframes particleFloat {
+  0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+  30%  { opacity: 0.6; transform: translateY(-15px) scale(1); }
+  70%  { opacity: 0.4; transform: translateY(-30px) scale(0.8); }
+  100% { opacity: 0; transform: translateY(-50px) scale(0.3); }
+}
+
+.olive-branches {
+  animation: branchSway 8s ease-in-out infinite alternate;
+}
+
+@keyframes branchSway {
+  0%   { transform: rotate(0deg); }
+  50%  { transform: rotate(0.3deg); }
+  100% { transform: rotate(-0.2deg); }
+}
+
+.olive-leaves {
+  animation: canopySway 10s ease-in-out infinite alternate;
+}
+
+@keyframes canopySway {
+  0%   { transform: translate(0, 0); }
+  50%  { transform: translate(0.5px, -0.5px); }
+  100% { transform: translate(-0.3px, 0.3px); }
+}

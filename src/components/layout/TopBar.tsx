@@ -9,6 +9,7 @@ const nav = [
   { to: '/reviews', label: 'Reviews' },
   { to: '/business', label: 'Business' },
   { to: '/insights', label: 'Insights' },
+  { to: '/olive-rehab', label: 'Olive Rehab' },
 ]
 
 export default function TopBar() {

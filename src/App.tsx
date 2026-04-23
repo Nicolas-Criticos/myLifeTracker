@@ -8,6 +8,7 @@ import Reviews from './pages/Reviews'
 import Insights from './pages/Insights'
 import Business from './pages/Business'
 import Journal from './pages/Journal'
+import OliveRehab from './pages/OliveRehab'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,6 +34,7 @@ export default function App() {
               <Route path="/insights" element={<Insights />} />
               <Route path="/business" element={<Business />} />
               <Route path="/journal" element={<Journal />} />
+              <Route path="/olive-rehab" element={<OliveRehab />} />
             </Routes>
           </div>
         </div>

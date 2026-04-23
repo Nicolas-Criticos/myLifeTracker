@@ -172,6 +172,89 @@ export interface CommunityProject {
   end_date: string | null
 }
 
+// ── OLIVE REHAB TYPES ─────────────────────────────────────────────────────────
+
+export type IrrigationStatus = 'active' | 'restored' | 'broken' | 'unknown'
+export type ActivityType =
+  | 'nutrient_feed' | 'foliar_spray' | 'irrigation'
+  | 'pruning_light' | 'pruning_major' | 'soil_correction'
+  | 'spring_activation' | 'other'
+export type PlanStatus = 'planned' | 'in_progress' | 'completed' | 'skipped' | 'overdue'
+export type MilestoneStatus = 'pending' | 'achieved' | 'missed'
+export type HealthTrend = 'improving' | 'stable' | 'declining'
+
+export interface RehabBlock {
+  id: string
+  name: string
+  tree_count: number
+  irrigation_status: IrrigationStatus
+  health_rating: number
+  soil_type: string | null
+  notes: string | null
+  latitude: number | null
+  longitude: number | null
+  created_at: string
+  updated_at: string
+}
+
+export interface RehabPlan {
+  id: string
+  block_id: string | null
+  activity_type: ActivityType
+  title: string
+  description: string | null
+  scheduled_month: string | null
+  scheduled_date: string | null
+  products: string | null
+  status: PlanStatus
+  priority: 'critical' | 'high' | 'normal' | 'low'
+  created_at: string
+  updated_at: string
+}
+
+export interface RehabLog {
+  id: string
+  date: string
+  block_id: string | null
+  plan_id: string | null
+  activity_type: ActivityType
+  title: string
+  description: string | null
+  observations: string | null
+  trees_affected: number | null
+  labour_count: number
+  labour_hours: number | null
+  products_used: string | null
+  weather_conditions: string | null
+  photos: string[] | null
+  created_at: string
+}
+
+export interface RehabMilestone {
+  id: string
+  title: string
+  description: string | null
+  target_date: string | null
+  completed_date: string | null
+  status: MilestoneStatus
+  block_id: string | null
+  created_at: string
+}
+
+export interface RehabWeeklySummary {
+  id: string
+  week_start: string
+  summary: string | null
+  blocks_worked: string[] | null
+  total_trees_serviced: number
+  total_labour_hours: number
+  activities_completed: number
+  activities_planned: number
+  key_observations: string | null
+  health_trend: HealthTrend | null
+  created_at: string
+}
+
 export interface CommunityTask {
   id: string
   created_at: string
