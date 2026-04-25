@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 import type {
   Project, Task, DailyCheckin, DailyLog, WeeklyReview, Pattern,
   Product, Expense, Sale, CommunityProject, CommunityTask, Dream,
+  FinAccount, FinMonthlyEntry,
 } from './supabase'
 import { getWeekRange, mondayOfCurrentWeek } from './utils'
 
@@ -577,6 +578,73 @@ export function useDeleteDream() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['dreams'] })
+    },
+  })
+}
+
+// ── FINANCES ──────────────────────────────────────────────────────────────────
+
+export function useFinAccounts() {
+  return useQuery({
+    queryKey: ['fin_accounts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fin_accounts')
+        .select('*')
+        .eq('active', true)
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      return data as FinAccount[]
+    },
+  })
+}
+
+export function useFinEntries() {
+  return useQuery({
+    queryKey: ['fin_entries'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fin_monthly_entries')
+        .select('*')
+        .order('month', { ascending: true })
+      if (error) throw error
+      return data as FinMonthlyEntry[]
+    },
+  })
+}
+
+export function useUpsertFinEntry() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (entry: Omit<FinMonthlyEntry, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
+        .from('fin_monthly_entries')
+        .upsert(entry, { onConflict: 'account_id,month' })
+        .select()
+        .single()
+      if (error) throw error
+      return data as FinMonthlyEntry
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['fin_entries'] })
+    },
+  })
+}
+
+export function useCreateFinAccount() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (account: Omit<FinAccount, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
+        .from('fin_accounts')
+        .insert(account)
+        .select()
+        .single()
+      if (error) throw error
+      return data as FinAccount
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['fin_accounts'] })
     },
   })
 }

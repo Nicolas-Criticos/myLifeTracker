@@ -11,6 +11,7 @@ import Journal from './pages/Journal'
 import OliveRehab from './pages/OliveRehab'
 import Todos from './pages/Todos'
 import Dreams from './pages/Dreams'
+import Finances from './pages/Finances'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ export default function App() {
               <Route path="/olive-rehab" element={<OliveRehab />} />
               <Route path="/todos" element={<Todos />} />
               <Route path="/dreams" element={<Dreams />} />
+              <Route path="/finances" element={<Finances />} />
             </Routes>
           </div>
         </div>

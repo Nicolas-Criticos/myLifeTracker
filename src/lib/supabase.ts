@@ -295,3 +295,23 @@ export interface Dream {
   tags: string[]
   created_at: string
 }
+
+// ── FINANCIAL TRACKER ─────────────────────────────────────────────────────────
+
+export interface FinAccount {
+  id: string
+  name: string
+  type: 'personal' | 'business' | 'investment'
+  color: string
+  active: boolean
+  created_at: string
+}
+
+export interface FinMonthlyEntry {
+  id: string
+  account_id: string
+  month: string // YYYY-MM
+  amount_zar: number
+  notes: string | null
+  created_at: string
+}
