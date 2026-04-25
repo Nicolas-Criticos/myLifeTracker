@@ -3,7 +3,7 @@ import { format } from 'date-fns'
 import { supabase } from './supabase'
 import type {
   Project, Task, DailyCheckin, DailyLog, WeeklyReview, Pattern,
-  Product, Expense, Sale, CommunityProject, CommunityTask,
+  Product, Expense, Sale, CommunityProject, CommunityTask, Dream,
 } from './supabase'
 import { getWeekRange, mondayOfCurrentWeek } from './utils'
 
@@ -492,5 +492,91 @@ export function useCommunityProjectTasks(projectId: string) {
       return data as CommunityTask[]
     },
     enabled: !!projectId,
+  })
+}
+
+// ── DREAMS ────────────────────────────────────────────────────────────────────
+
+export function useDreams(limit = 30) {
+  return useQuery({
+    queryKey: ['dreams', limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ops_dreams')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(limit)
+      if (error) throw error
+      return data as Dream[]
+    },
+  })
+}
+
+export function useThisWeekDreams() {
+  const { start, end } = getWeekRange()
+  const startStr = format(start, 'yyyy-MM-dd')
+  const endStr = format(end, 'yyyy-MM-dd')
+  return useQuery({
+    queryKey: ['dreams', 'week', startStr],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ops_dreams')
+        .select('*')
+        .gte('date', startStr)
+        .lte('date', endStr)
+        .order('date', { ascending: true })
+      if (error) throw error
+      return data as Dream[]
+    },
+  })
+}
+
+export function useCreateDream() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (dream: Omit<Dream, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
+        .from('ops_dreams')
+        .insert(dream)
+        .select()
+        .single()
+      if (error) throw error
+      return data as Dream
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['dreams'] })
+    },
+  })
+}
+
+export function useUpdateDream() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Dream> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('ops_dreams')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data as Dream
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['dreams'] })
+    },
+  })
+}
+
+export function useDeleteDream() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('ops_dreams').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['dreams'] })
+    },
   })
 }

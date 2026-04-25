@@ -255,6 +255,20 @@ export interface RehabWeeklySummary {
   created_at: string
 }
 
+export interface Dream {
+  id: string
+  date: string
+  title: string | null
+  narrative: string
+  symbols: string[]
+  emotions: string[]
+  clarity: number
+  lucid: boolean
+  recurring: boolean
+  tags: string[]
+  created_at: string
+}
+
 export interface CommunityTask {
   id: string
   created_at: string
@@ -264,4 +278,20 @@ export interface CommunityTask {
   project: string
   start_date: string | null
   end_date: string | null
+}
+
+// ── DREAM TRACKER ─────────────────────────────────────────────────────────────
+
+export interface Dream {
+  id: string
+  date: string
+  title: string | null
+  narrative: string
+  symbols: string[]
+  emotions: string[]
+  clarity: number
+  lucid: boolean
+  recurring: boolean
+  tags: string[]
+  created_at: string
 }

@@ -1,6 +1,7 @@
 import { parseISO, format } from 'date-fns'
-import { useDailyCheckins, useDailyLogs } from '../lib/queries'
-import type { DailyCheckin, DailyLog } from '../lib/supabase'
+import { useDailyCheckins, useDailyLogs, useDreams } from '../lib/queries'
+import type { DailyCheckin, DailyLog, Dream } from '../lib/supabase'
+import { Link } from 'react-router-dom'
 
 // ── STYLE CONSTANTS ───────────────────────────────────────────────────────────
 
@@ -95,10 +96,11 @@ function ScoreDot({ color, label, value }: { color: string; label: string; value
 
 // ── DAY ENTRY ─────────────────────────────────────────────────────────────────
 
-function DayEntry({ date, checkin, log }: {
+function DayEntry({ date, checkin, log, dreams }: {
   date: string
   checkin?: DailyCheckin
   log?: DailyLog
+  dreams?: Dream[]
 }) {
   const parsed = parseISO(date)
   const dateLabel = format(parsed, 'EEEE, d MMMM yyyy')
@@ -345,6 +347,63 @@ function DayEntry({ date, checkin, log }: {
         </section>
       )}
 
+      {/* ── Dreams ──────────────────────────────────────────────────────────── */}
+      {dreams && dreams.length > 0 && (
+        <>
+          {(checkin || log) && (
+            <hr style={{
+              border: 'none',
+              borderTop: '1px solid var(--border-warm)',
+              margin: '32px 0',
+              width: '180px',
+            }} />
+          )}
+          <section>
+            <p style={{ ...LABEL, marginBottom: '16px' }}>Dreams</p>
+            {dreams.map(dream => (
+              <Link
+                key={dream.id}
+                to="/dreams"
+                style={{ textDecoration: 'none' }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '8px',
+                  marginBottom: '8px',
+                  cursor: 'pointer',
+                }}>
+                  <span style={{ fontSize: '0.85rem' }}>🌙</span>
+                  <p style={{
+                    ...DISPLAY,
+                    fontSize: '1rem',
+                    color: 'var(--ink)',
+                    margin: 0,
+                    lineHeight: 1.6,
+                  }}>
+                    {dream.title || 'Untitled dream'}
+                  </p>
+                  {dream.lucid && (
+                    <span style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: '0.58rem',
+                      letterSpacing: '0.1em',
+                      textTransform: 'uppercase',
+                      padding: '2px 7px',
+                      borderRadius: '20px',
+                      background: 'rgba(74,107,138,0.12)',
+                      color: '#4a6b8a',
+                    }}>
+                      Lucid
+                    </span>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </section>
+        </>
+      )}
+
       {/* Day separator — warm gradient line */}
       <div style={{
         marginTop: '60px',
@@ -361,16 +420,23 @@ function DayEntry({ date, checkin, log }: {
 export default function Journal() {
   const { data: checkins = [], isLoading: checkinsLoading } = useDailyCheckins(30)
   const { data: logs = [], isLoading: logsLoading } = useDailyLogs(30)
+  const { data: dreams = [], isLoading: dreamsLoading } = useDreams(30)
 
-  const isLoading = checkinsLoading || logsLoading
+  const isLoading = checkinsLoading || logsLoading || dreamsLoading
 
   const allDates = [...new Set([
     ...checkins.map(c => c.date),
     ...logs.map(l => l.date),
+    ...dreams.map(d => d.date),
   ])].sort((a, b) => b.localeCompare(a))
 
   const checkinByDate = Object.fromEntries(checkins.map(c => [c.date, c]))
   const logByDate = Object.fromEntries(logs.map(l => [l.date, l]))
+  const dreamsByDate: Record<string, Dream[]> = {}
+  dreams.forEach(d => {
+    if (!dreamsByDate[d.date]) dreamsByDate[d.date] = []
+    dreamsByDate[d.date].push(d)
+  })
 
   if (isLoading) {
     return (
@@ -419,6 +485,7 @@ export default function Journal() {
           date={date}
           checkin={checkinByDate[date] as DailyCheckin | undefined}
           log={logByDate[date] as DailyLog | undefined}
+          dreams={dreamsByDate[date]}
         />
       ))}
     </main>
