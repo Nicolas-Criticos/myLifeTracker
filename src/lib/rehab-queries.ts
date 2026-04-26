@@ -308,9 +308,9 @@ export function useAllBlockTasksForMonth(month: string) {
     queryKey: ['rehab_block_tasks', month],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('rehab_block_deliverables')
+        .from('rehab_block_tasks')
         .select('*')
-        .like('notes', `${month}|%`)
+        .eq('month', month)
       if (error) throw error
       return data ?? []
     },
@@ -322,11 +322,11 @@ export function useBlockTasksForMonth(blockId: string, month: string) {
     queryKey: ['rehab_block_tasks', blockId, month],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('rehab_block_deliverables')
+        .from('rehab_block_tasks')
         .select('*')
         .eq('block_id', blockId)
-        .like('notes', `${month}|%`)
-        .order('name', { ascending: true })
+        .eq('month', month)
+        .order('title', { ascending: true })
       if (error) throw error
       return data ?? []
     },

@@ -10,11 +10,17 @@ import type { RehabBlock } from '../../lib/supabase'
 interface BlockDeliverable {
   id: string
   block_id: string
-  name: string
+  month: string
+  activity_type: string
+  title: string
+  notes: string | null
   completed: boolean
   completed_date: string | null
-  notes: string | null
-  cost: number
+  completed_by: string | null
+  unit_cost: number | null
+  units: number | null
+  cost_unit: string | null
+  total_cost: number | null
   created_at: string
   updated_at: string
 }
@@ -55,14 +61,14 @@ const ACTIVITY_LABELS: Record<string, string> = {
 
 function useBlockDeliverables(blockId: string, month: string) {
   return useQuery({
-    queryKey: ['rehab_block_deliverables', blockId, month],
+    queryKey: ['rehab_block_tasks', blockId, month],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('rehab_block_deliverables')
+        .from('rehab_block_tasks')
         .select('*')
         .eq('block_id', blockId)
-        .like('notes', `${month}|%`)
-        .order('name', { ascending: true })
+        .eq('month', month)
+        .order('title', { ascending: true })
       if (error) throw error
       return data as BlockDeliverable[]
     },
@@ -75,10 +81,11 @@ function useToggleDeliverable() {
   return useMutation({
     mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
       const { data, error } = await supabase
-        .from('rehab_block_deliverables')
+        .from('rehab_block_tasks')
         .update({
           completed,
           completed_date: completed ? format(new Date(), 'yyyy-MM-dd') : null,
+          completed_by: completed ? 'nicris' : null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -88,7 +95,7 @@ function useToggleDeliverable() {
       return data
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['rehab_block_deliverables'] })
+      qc.invalidateQueries({ queryKey: ['rehab_block_tasks'] })
     },
   })
 }
@@ -453,7 +460,7 @@ export default function BlockDetailModal({ block, onClose }: BlockDetailModalPro
                     flex: 1,
                     transition: 'all 200ms ease',
                   }}>
-                    {d.name}
+                    {d.title}
                   </span>
                   {d.completed_date && (
                     <span style={{
