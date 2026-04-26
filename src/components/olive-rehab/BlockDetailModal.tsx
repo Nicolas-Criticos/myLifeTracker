@@ -3,7 +3,7 @@ import { format, parseISO } from 'date-fns'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { useRehabLogsForBlock } from '../../lib/rehab-queries'
-import type { RehabBlock, RehabLog } from '../../lib/supabase'
+import type { RehabBlock } from '../../lib/supabase'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

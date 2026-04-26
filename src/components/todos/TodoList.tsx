@@ -11,14 +11,6 @@ const DISPLAY: React.CSSProperties = {
   fontWeight: 300,
 }
 
-const LABEL: React.CSSProperties = {
-  fontFamily: 'var(--font-body)',
-  fontSize: '0.62rem',
-  fontWeight: 400,
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase',
-  color: 'var(--ink-muted)',
-}
 
 const INPUT: React.CSSProperties = {
   fontFamily: 'var(--font-body)',
@@ -110,7 +102,6 @@ function TaskItem({ task, onToggle, onDelete, onUpdate }: {
   const isDone = task.status === 'completed'
   const isDropped = task.status === 'dropped'
   const isOverdue = task.scheduled_date && !isDone && !isDropped && isPast(parseISO(task.scheduled_date)) && !isToday(parseISO(task.scheduled_date))
-  const now = nowInSAST()
 
   const saveEdit = () => {
     onUpdate({
@@ -282,7 +273,7 @@ type Filter = 'all' | 'today' | 'week' | 'done'
 
 export default function TodoList() {
   const { data: tasks = [], isLoading } = useTasks()
-  const { data: projects = [] } = useProjects()
+  useProjects() // loaded for future task-project linking
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()

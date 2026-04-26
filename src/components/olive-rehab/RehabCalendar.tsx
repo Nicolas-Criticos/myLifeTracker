@@ -1,4 +1,4 @@
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 import { useRehabPlan, useRehabLogs } from '../../lib/rehab-queries'
 import { nowInSAST } from '../../lib/utils'
 import type { RehabPlan, RehabLog } from '../../lib/supabase'
