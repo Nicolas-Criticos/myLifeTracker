@@ -5,7 +5,7 @@ import SeasonIndicator from './SeasonIndicator'
 import BlockDetailModal from './BlockDetailModal'
 import {
   useTreeHealthScore, useRehabBlocks, useRehabLogs, useCurrentMonthPlan,
-  useRehabMilestones, ACTIVITY_LABELS, useAllBlockTasksForMonth,
+  useRehabMilestones, useAllBlockMilestones, useAllBlockTasksForMonth, ACTIVITY_LABELS,
 } from '../../lib/rehab-queries'
 import { nowInSAST } from '../../lib/utils'
 import type { RehabBlock } from '../../lib/supabase'
@@ -69,11 +69,12 @@ function StatusPill({ status }: { status: string }) {
 export default function RehabDashboard() {
   const [selectedBlock, setSelectedBlock] = useState<RehabBlock | null>(null)
   const healthScore = useTreeHealthScore(10)
-  const { data: blocks = [] }       = useRehabBlocks()
-  const { data: allLogs = [] }      = useRehabLogs(90)
-  const { data: monthPlan = [] }    = useCurrentMonthPlan()
-  const { data: milestones = [] }   = useRehabMilestones()
-  const { data: allBlockTasks = [] } = useAllBlockTasksForMonth(format(nowInSAST(), 'yyyy-MM'))
+  const { data: blocks = [] }          = useRehabBlocks()
+  const { data: allLogs = [] }          = useRehabLogs(90)
+  const { data: monthPlan = [] }        = useCurrentMonthPlan()
+  const { data: milestones = [] }       = useRehabMilestones()
+  const { data: allBlockTasks = [] }    = useAllBlockTasksForMonth(format(nowInSAST(), 'yyyy-MM'))
+  const { data: allBlockMilestones = [] } = useAllBlockMilestones()
   const now = nowInSAST()
 
   const currentMonth = format(now, 'yyyy-MM')
@@ -85,13 +86,18 @@ export default function RehabDashboard() {
   const totalTrees = blocks.reduce((s, b) => s + (b.tree_count || 0), 0)
   const pendingMilestones = milestones.filter(m => m.status === 'pending')
 
-  // Per-block progress: direct from the monthly checklist (rehab_block_deliverables)
+  // Per-block: monthly checklist progress (X/Y this month)
   const blockProgress = blocks.map(block => {
     const tasks = allBlockTasks.filter((t: any) => t.block_id === block.id)
     const done = tasks.filter((t: any) => t.completed).length
     const total = tasks.length
     const pct = total > 0 ? Math.round((done / total) * 100) : 0
-    return { block, pct, done, total }
+    // Lifetime milestone progress (0-9)
+    const bms = allBlockMilestones.filter((m: any) => m.block_id === block.id)
+    const msDone = bms.filter((m: any) => m.completed).length
+    const msTotal = bms.length || 9
+    const msPct = Math.round((msDone / msTotal) * 100)
+    return { block, pct, done, total, msDone, msTotal, msPct }
   })
 
   const stats = [
@@ -177,7 +183,7 @@ export default function RehabDashboard() {
       <div className="card" style={{ padding: '28px', border: '1px solid rgba(90, 114, 71, 0.1)' }}>
         <p style={{ ...LABEL, marginBottom: '20px' }}>Block Progress</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
-          {blockProgress.map(({ block, pct, done, total }) => {
+          {blockProgress.map(({ block, pct, done, total, msDone, msTotal, msPct }) => {
             const isActive = block.irrigation_status === 'restored' || block.irrigation_status === 'active'
             return (
               <div
@@ -206,36 +212,41 @@ export default function RehabDashboard() {
                   fontSize: '0.58rem',
                   fontWeight: 300,
                   color: isActive ? '#5a7247' : 'var(--ink-muted)',
-                  margin: '0 0 8px',
+                  margin: '0 0 10px',
                   letterSpacing: '0.06em',
                   textTransform: 'uppercase',
                 }}>
                   {isActive ? 'Active' : 'Pending'}
                 </p>
-                {/* Progress bar */}
-                <div style={{
-                  height: '3px',
-                  borderRadius: '2px',
-                  background: 'rgba(44, 42, 37, 0.07)',
-                  overflow: 'hidden',
-                  marginBottom: '6px',
-                }}>
+
+                {/* Lifetime rehab bar (9 milestones) */}
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.52rem', color: 'var(--ink-faint)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 3px' }}>Rehab</p>
+                <div style={{ height: '4px', borderRadius: '2px', background: 'rgba(44, 42, 37, 0.07)', overflow: 'hidden', marginBottom: '3px' }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${msPct}%`,
+                    background: healthColor(block.health_rating),
+                    borderRadius: '2px',
+                    transition: 'width 1.2s ease',
+                  }} />
+                </div>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.58rem', fontWeight: 300, color: 'var(--ink-muted)', margin: '0 0 10px' }}>
+                  {msDone}/{msTotal}
+                </p>
+
+                {/* This month's checklist */}
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.52rem', color: 'var(--ink-faint)', letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 3px' }}>{format(now, 'MMM')}</p>
+                <div style={{ height: '3px', borderRadius: '2px', background: 'rgba(44, 42, 37, 0.07)', overflow: 'hidden', marginBottom: '3px' }}>
                   <div style={{
                     height: '100%',
                     width: `${pct}%`,
-                    background: healthColor(block.health_rating),
+                    background: pct === 100 ? '#5a7247' : 'rgba(90, 114, 71, 0.5)',
                     borderRadius: '2px',
-                    transition: 'width 1.2s ease, background 1.2s ease',
+                    transition: 'width 1.2s ease',
                   }} />
                 </div>
-                <p style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: '0.6rem',
-                  fontWeight: 300,
-                  color: 'var(--ink-muted)',
-                  margin: 0,
-                }}>
-                  {total > 0 ? `${done}/${total}` : `${block.tree_count || 500} trees`}
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.58rem', fontWeight: 300, color: 'var(--ink-muted)', margin: 0 }}>
+                  {total > 0 ? `${done}/${total}` : '—'}
                 </p>
               </div>
             )

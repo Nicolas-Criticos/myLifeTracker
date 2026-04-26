@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { format, parseISO } from 'date-fns'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { useRehabLogsForBlock } from '../../lib/rehab-queries'
+import { useRehabLogsForBlock, useBlockMilestones, useToggleBlockMilestone } from '../../lib/rehab-queries'
 import type { RehabBlock } from '../../lib/supabase'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -151,9 +151,15 @@ export default function BlockDetailModal({ block, onClose }: BlockDetailModalPro
   const currentMonth = format(new Date(), 'yyyy-MM')
   const { data: deliverables = [] } = useBlockDeliverables(block.id, currentMonth)
   const { data: logs = [] } = useRehabLogsForBlock(block.id)
+  const { data: milestones = [] } = useBlockMilestones(block.id)
   const toggleDeliverable = useToggleDeliverable()
+  const toggleMilestone = useToggleBlockMilestone()
   const updateNotes = useUpdateBlockNotes()
   const updateHealth = useUpdateBlockHealth()
+
+  const msDone = milestones.filter((m: any) => m.completed).length
+  const msTotal = milestones.length || 9
+  const msPct = Math.round((msDone / msTotal) * 100)
 
   const [notes, setNotes] = useState(block.notes || '')
   const [notesEditing, setNotesEditing] = useState(false)
@@ -320,6 +326,62 @@ export default function BlockDetailModal({ block, onClose }: BlockDetailModalPro
               <span style={{ fontSize: '0.65rem', color: 'var(--ink-muted)' }}>✎</span>
             </div>
           )}
+        </div>
+
+        {/* Lifetime Rehab Journey */}
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <p style={{ ...LABEL, margin: 0 }}>Rehab Journey</p>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.68rem', color: msDone === msTotal ? '#5a7247' : 'var(--ink-muted)' }}>
+              {msDone}/{msTotal}
+            </span>
+          </div>
+          <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(44, 42, 37, 0.06)', overflow: 'hidden', marginBottom: '16px' }}>
+            <div style={{ height: '100%', width: `${msPct}%`, background: healthColor(block.health_rating), borderRadius: '3px', transition: 'width 1.2s ease' }} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {milestones.map((m: any) => {
+              const isFuture = !m.completed && milestones.filter((x: any) => x.task_order < m.task_order && !x.completed).length > 0
+              return (
+                <div
+                  key={m.id}
+                  onClick={() => !isFuture && toggleMilestone.mutate({ id: m.id, completed: !m.completed })}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    padding: '9px 14px',
+                    borderRadius: '10px',
+                    background: m.completed ? 'rgba(90, 114, 71, 0.06)' : isFuture ? 'transparent' : 'rgba(44, 42, 37, 0.02)',
+                    border: `1px solid ${m.completed ? 'rgba(90, 114, 71, 0.12)' : 'rgba(44, 42, 37, 0.05)'}`,
+                    cursor: isFuture ? 'default' : 'pointer',
+                    opacity: isFuture ? 0.45 : 1,
+                    transition: 'all 200ms ease',
+                  }}
+                >
+                  <div style={{
+                    width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0,
+                    border: `2px solid ${m.completed ? '#5a7247' : 'rgba(44, 42, 37, 0.2)'}`,
+                    background: m.completed ? '#5a7247' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 200ms ease',
+                  }}>
+                    {m.completed && (
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                        <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.72rem', color: m.completed ? 'var(--ink-muted)' : 'var(--ink)', fontWeight: m.completed ? 300 : 400, flex: 1, textDecoration: m.completed ? 'line-through' : 'none' }}>
+                    {m.task_order}. {m.title}
+                  </span>
+                  {m.completed_date && (
+                    <span style={{ fontFamily: 'var(--font-body)', fontSize: '0.6rem', color: 'var(--ink-muted)' }}>
+                      {format(new Date(m.completed_date), 'MMM d')}
+                    </span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
 
         {/* Monthly Checklist */}

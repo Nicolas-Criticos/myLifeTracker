@@ -176,7 +176,62 @@ export function useCreateRehabLog() {
   })
 }
 
-// ── MILESTONES ────────────────────────────────────────────────────────────────
+// ── BLOCK LIFETIME MILESTONES (9-task rehab journey) ────────────────────────
+
+export function useAllBlockMilestones() {
+  return useQuery({
+    queryKey: ['rehab_block_milestones'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('rehab_block_milestones')
+        .select('*')
+        .order('task_order', { ascending: true })
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}
+
+export function useBlockMilestones(blockId: string) {
+  return useQuery({
+    queryKey: ['rehab_block_milestones', blockId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('rehab_block_milestones')
+        .select('*')
+        .eq('block_id', blockId)
+        .order('task_order', { ascending: true })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!blockId,
+  })
+}
+
+export function useToggleBlockMilestone() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const { data, error } = await supabase
+        .from('rehab_block_milestones')
+        .update({
+          completed,
+          completed_date: completed ? format(new Date(), 'yyyy-MM-dd') : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['rehab_block_milestones'] })
+    },
+  })
+}
+
+// ── PLAN MILESTONES ───────────────────────────────────────────────────────────
 
 export function useRehabMilestones() {
   return useQuery({
