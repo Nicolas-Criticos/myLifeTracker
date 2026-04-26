@@ -246,6 +246,39 @@ export function useTreeHealthScore(totalBlocks = 10) {
   return Math.max(1, Math.min(10, Math.round(score * 10) / 10))
 }
 
+// ── BLOCK MONTHLY TASKS (checklist) ─────────────────────────────────────────
+
+export function useAllBlockTasksForMonth(month: string) {
+  return useQuery({
+    queryKey: ['rehab_block_tasks', month],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('rehab_block_deliverables')
+        .select('*')
+        .like('notes', `${month}|%`)
+      if (error) throw error
+      return data ?? []
+    },
+  })
+}
+
+export function useBlockTasksForMonth(blockId: string, month: string) {
+  return useQuery({
+    queryKey: ['rehab_block_tasks', blockId, month],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('rehab_block_deliverables')
+        .select('*')
+        .eq('block_id', blockId)
+        .like('notes', `${month}|%`)
+        .order('name', { ascending: true })
+      if (error) throw error
+      return data ?? []
+    },
+    enabled: !!blockId,
+  })
+}
+
 // ── BLOCK PROGRESS ────────────────────────────────────────────────────────────
 
 export function useBlockProgress(blockId: string) {

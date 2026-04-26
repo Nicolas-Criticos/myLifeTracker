@@ -53,14 +53,15 @@ const ACTIVITY_LABELS: Record<string, string> = {
 
 // ── Hooks ─────────────────────────────────────────────────────────────────────
 
-function useBlockDeliverables(blockId: string) {
+function useBlockDeliverables(blockId: string, month: string) {
   return useQuery({
-    queryKey: ['rehab_block_deliverables', blockId],
+    queryKey: ['rehab_block_deliverables', blockId, month],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('rehab_block_deliverables')
         .select('*')
         .eq('block_id', blockId)
+        .like('notes', `${month}|%`)
         .order('name', { ascending: true })
       if (error) throw error
       return data as BlockDeliverable[]
@@ -147,7 +148,8 @@ function statusColor(status: string): string {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function BlockDetailModal({ block, onClose }: BlockDetailModalProps) {
-  const { data: deliverables = [] } = useBlockDeliverables(block.id)
+  const currentMonth = format(new Date(), 'yyyy-MM')
+  const { data: deliverables = [] } = useBlockDeliverables(block.id, currentMonth)
   const { data: logs = [] } = useRehabLogsForBlock(block.id)
   const toggleDeliverable = useToggleDeliverable()
   const updateNotes = useUpdateBlockNotes()
@@ -160,8 +162,6 @@ export default function BlockDetailModal({ block, onClose }: BlockDetailModalPro
 
   const completedCount = deliverables.filter(d => d.completed).length
   const totalDeliverables = deliverables.length
-  const totalCost = logs.reduce((s, l) => s + ((l as any).cost || 0), 0) +
-    deliverables.reduce((s, d) => s + (d.cost || 0), 0)
 
   const saveNotes = () => {
     updateNotes.mutate({ id: block.id, notes })
@@ -322,14 +322,16 @@ export default function BlockDetailModal({ block, onClose }: BlockDetailModalPro
           )}
         </div>
 
-        {/* Deliverables Checklist */}
+        {/* Monthly Checklist */}
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <p style={{ ...LABEL, margin: 0 }}>Deliverables</p>
+            <div>
+              <p style={{ ...LABEL, margin: 0 }}>{format(new Date(), 'MMMM')} Checklist</p>
+            </div>
             <span style={{
               fontFamily: 'var(--font-body)',
               fontSize: '0.68rem',
-              color: completedCount === totalDeliverables ? '#5a7247' : 'var(--ink-muted)',
+              color: totalDeliverables > 0 && completedCount === totalDeliverables ? '#5a7247' : 'var(--ink-muted)',
             }}>
               {completedCount}/{totalDeliverables}
             </span>
@@ -342,7 +344,7 @@ export default function BlockDetailModal({ block, onClose }: BlockDetailModalPro
               color: 'var(--ink-muted)',
               fontStyle: 'italic',
             }}>
-              Run migration 002 to see deliverables.
+              No tasks set for this block this month. Tell Tracey to add one.
             </p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -406,26 +408,7 @@ export default function BlockDetailModal({ block, onClose }: BlockDetailModalPro
           )}
         </div>
 
-        {/* Cost Summary */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '16px',
-          marginBottom: '24px',
-          padding: '14px 20px',
-          background: 'rgba(44, 42, 37, 0.03)',
-          borderRadius: 'var(--radius-sm)',
-        }}>
-          <p style={{ ...LABEL, margin: 0 }}>Total Cost</p>
-          <p style={{
-            ...DISPLAY,
-            fontSize: '1.6rem',
-            color: 'var(--ink)',
-            margin: 0,
-          }}>
-            R{totalCost.toLocaleString('en-ZA', { minimumFractionDigits: 0 })}
-          </p>
-        </div>
+
 
         {/* Block Notes */}
         <div style={{ marginBottom: '24px' }}>

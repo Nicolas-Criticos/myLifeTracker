@@ -5,7 +5,7 @@ import SeasonIndicator from './SeasonIndicator'
 import BlockDetailModal from './BlockDetailModal'
 import {
   useTreeHealthScore, useRehabBlocks, useRehabLogs, useCurrentMonthPlan,
-  useRehabMilestones, ACTIVITY_LABELS,
+  useRehabMilestones, ACTIVITY_LABELS, useAllBlockTasksForMonth,
 } from '../../lib/rehab-queries'
 import { nowInSAST } from '../../lib/utils'
 import type { RehabBlock } from '../../lib/supabase'
@@ -69,11 +69,11 @@ function StatusPill({ status }: { status: string }) {
 export default function RehabDashboard() {
   const [selectedBlock, setSelectedBlock] = useState<RehabBlock | null>(null)
   const healthScore = useTreeHealthScore(10)
-  const { data: blocks = [] }  = useRehabBlocks()
-  const { data: allLogs = [] } = useRehabLogs(90) // enough for monthly stats + display
-  const { data: monthPlan = [] }   = useCurrentMonthPlan()
-  const { data: allPlan = [] }     = useCurrentMonthPlan() // we reuse for plan preview
-  const { data: milestones = [] }  = useRehabMilestones()
+  const { data: blocks = [] }       = useRehabBlocks()
+  const { data: allLogs = [] }      = useRehabLogs(90)
+  const { data: monthPlan = [] }    = useCurrentMonthPlan()
+  const { data: milestones = [] }   = useRehabMilestones()
+  const { data: allBlockTasks = [] } = useAllBlockTasksForMonth(format(nowInSAST(), 'yyyy-MM'))
   const now = nowInSAST()
 
   const currentMonth = format(now, 'yyyy-MM')
@@ -85,15 +85,13 @@ export default function RehabDashboard() {
   const totalTrees = blocks.reduce((s, b) => s + (b.tree_count || 0), 0)
   const pendingMilestones = milestones.filter(m => m.status === 'pending')
 
-  // Per-block progress: for each block, count plan items completed vs total
-  // We use activity_type matching between plan and logs as a proxy
+  // Per-block progress: direct from the monthly checklist (rehab_block_deliverables)
   const blockProgress = blocks.map(block => {
-    const blockPlan = allPlan.filter(p => !p.block_id || p.block_id === block.id)
-    const blockLogs = allLogs.filter(l => l.block_id === block.id)
-    const loggedTypes = new Set(blockLogs.map(l => l.activity_type))
-    const done = blockPlan.filter(p => p.status === 'completed' || loggedTypes.has(p.activity_type)).length
-    const pct = blockPlan.length > 0 ? Math.round((done / blockPlan.length) * 100) : 0
-    return { block, pct, done, total: blockPlan.length }
+    const tasks = allBlockTasks.filter((t: any) => t.block_id === block.id)
+    const done = tasks.filter((t: any) => t.completed).length
+    const total = tasks.length
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0
+    return { block, pct, done, total }
   })
 
   const stats = [
