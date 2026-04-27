@@ -383,7 +383,7 @@ function BookDetail({ book, onClose }: { book: Book | 'new'; onClose: () => void
 
 // ── Main Panel ─────────────────────────────────────────────────────────────────
 
-export default function ReadingList() {
+export default function ReadingList({ inline: _inline = false }: { inline?: boolean }) {
   const [open, setOpen] = useState(false)
   const [selectedBook, setSelectedBook] = useState<Book | 'new' | null>(null)
   const { data: books = [] } = useBooks()
@@ -394,27 +394,23 @@ export default function ReadingList() {
 
   return (
     <>
-      {/* Floating trigger button */}
+      {/* Trigger button */}
       <button
         onClick={() => setOpen(true)}
         title="Reading list"
         style={{
-          position: 'fixed',
-          top: '20px',
-          right: '24px',
-          zIndex: 50,
-          width: '42px',
-          height: '42px',
+          position: 'relative',
+          width: '34px',
+          height: '34px',
           borderRadius: '50%',
-          background: open ? 'rgba(90,114,71,0.12)' : 'rgba(248,245,238,0.9)',
+          background: open ? 'rgba(90,114,71,0.1)' : 'transparent',
           border: '1px solid rgba(44,42,37,0.1)',
-          backdropFilter: 'blur(8px)',
-          boxShadow: '0 2px 12px rgba(44,42,37,0.08)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'all 200ms ease',
+          flexShrink: 0,
         }}
       >
         {/* Book icon */}

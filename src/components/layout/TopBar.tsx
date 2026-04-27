@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { format } from 'date-fns'
 import { nowInSAST } from '../../lib/utils'
+import ReadingList from '../dashboard/ReadingList'
 
 const nav = [
   { to: '/', label: 'Dashboard', end: true },
@@ -75,16 +76,19 @@ export default function TopBar() {
         ))}
       </nav>
 
-      {/* Date */}
-      <span style={{
-        fontFamily: 'var(--font-body)',
-        fontWeight: 300,
-        fontSize: '0.8rem',
-        color: 'var(--ink-muted)',
-        letterSpacing: '0.03em',
-      }}>
-        {format(now, 'EEE, MMM d')}
-      </span>
+      {/* Right side: date + reading icon */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <span style={{
+          fontFamily: 'var(--font-body)',
+          fontWeight: 300,
+          fontSize: '0.8rem',
+          color: 'var(--ink-muted)',
+          letterSpacing: '0.03em',
+        }}>
+          {format(now, 'EEE, MMM d')}
+        </span>
+        <ReadingList inline />
+      </div>
     </header>
   )
 }
