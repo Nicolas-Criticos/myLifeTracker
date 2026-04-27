@@ -24,8 +24,8 @@ const CHAKRAS: ChakraNode[] = [
     title: 'Crown · Awaiting',
     summary:
       'This node is open. Future inputs: additional charts, sacred geometry, or personal revelation.',
-    color: '#6B00B3',
-    top: 9,
+    color: '#7B00CC',
+    top: 15,
     side: 'right',
   },
   {
@@ -34,8 +34,8 @@ const CHAKRAS: ChakraNode[] = [
     title: 'Taurus Ascendant · Aquarius Sun · Rahu Dasha',
     summary:
       'Vedic soul chart. Taurus Ascendant (Mrigashirsha): builder, sensual, land-rooted. Sun + Jupiter + Ketu in 10th (Aquarius): spiritual purpose, public detachment, cosmic contribution. Strong 11th house (Mars, Mercury, Saturn in Pisces): humanitarian ideals, disciplined creativity, networked action. Rahu in Leo 4th: ancestral healing, home as destiny. Moon in Virgo 5th (Uttara Phalguni): devoted service through joy. Current Maha Dasha: Rahu (2018–2036) — Saturn sub-dasha (Jan 2024 – Nov 2026): structure, discipline, karmic building.',
-    color: '#2a0080',
-    top: 14,
+    color: '#3311AA',
+    top: 20,
     side: 'left',
     pdf: '/docs/vedic-astrology.pdf',
   },
@@ -45,8 +45,8 @@ const CHAKRAS: ChakraNode[] = [
     title: 'Pisces Sun · Gemini Rising · Virgo Moon',
     summary:
       'Sun in Pisces (House IX): visionary, spiritual, boundless imagination, truth-seeker. Moon in Virgo (House III): precise emotional world, service-oriented, analytical heart. Gemini Rising: quick-minded, adaptable, communicative face to the world. Heavy Aries MC with Mercury, Mars, Saturn in 10th: bold, pioneering public presence. Aquarius stellium in 8th (Venus, Uranus, Neptune): depth, transformation, unconventional soul. Jupiter conjunct Sun in Pisces: philosopher, traveller, teacher.',
-    color: '#004488',
-    top: 22,
+    color: '#0055AA',
+    top: 27,
     side: 'right',
     pdf: '/docs/western-astrology.pdf',
   },
@@ -56,8 +56,8 @@ const CHAKRAS: ChakraNode[] = [
     title: 'Who You Are',
     summary:
       'A 7-life-path Projector with Pisces Sun and Taurus Vedic Ascendant — you are a rare combination of boundless vision and deep groundedness. You see what others miss, build what others dream, and guide without needing to lead loudly. The Earth Tiger adds patient courage. You are in Rahu Dasha (2018–2036), the great expansion of your life — currently in the Saturn sub-period (2024–2026): the grind, the roots, the testing. This is not a time to rush. Build deep. What you are planting now will hold everything that comes.',
-    color: '#1a5c2a',
-    top: 32,
+    color: '#1a7a2a',
+    top: 36,
     side: 'left',
   },
   {
@@ -66,8 +66,8 @@ const CHAKRAS: ChakraNode[] = [
     title: 'Projector · Wait for the Invitation',
     summary:
       'You are not built to initiate — you are built to see. Your gift is reading systems, energy, and people with uncanny precision. The strategy is to wait for genuine recognition and invitation before acting. When aligned: Success. When not: Bitterness. Over-initiating drains you. Rest is not laziness — it is preparation. You are a guide, not a generator.',
-    color: '#8B7A00',
-    top: 40,
+    color: '#AA8800',
+    top: 45,
     side: 'right',
     pdf: '/docs/human-design.pdf',
   },
@@ -77,8 +77,8 @@ const CHAKRAS: ChakraNode[] = [
     title: 'The Seeker · Life Path 7',
     summary:
       'Life Path 7 · Destiny 7 · Soul 4 · Personality 3 · Maturity 5. The double-7 stamps your life with a single mission: find truth. Your Soul desires order and foundation; your Personality charms and inspires. Currently in your First Pinnacle (7) — a time of self-discovery and spiritual development. Building years ahead.',
-    color: '#8B5A00',
-    top: 50,
+    color: '#CC6600',
+    top: 54,
     side: 'left',
     pdf: '/docs/numerology.pdf',
   },
@@ -88,15 +88,15 @@ const CHAKRAS: ChakraNode[] = [
     title: 'Earth Tiger · 1998',
     summary:
       "Courageous and grounded. The Earth modifier tempers the Tiger's fire — you build before you leap. Magnetic, loyal, fierce in protection of what matters. Strategic patience is your edge.",
-    color: '#8B2500',
-    top: 60,
+    color: '#CC2200',
+    top: 63,
     side: 'right',
   },
 ]
 
 // ── Layout constants ───────────────────────────────────────────────────────────
 
-const DOT_LEFT = 49   // % x-position of the chakra spine
+const DOT_LEFT = 50   // % x-position of the chakra spine — true centre of container
 const LINE_LEN = 16   // SVG units
 const TOPBAR_H = 64   // px — matches TopBar height
 
@@ -135,19 +135,28 @@ export default function HumanOverview() {
       <style>{STYLES}</style>
 
       {/* ── Vitruvian background ── */}
-      <img
-        src="/vitruvian.jpg"
-        alt="Vitruvian Man"
+      {/* Wrapper applies a CSS mask so the image fades into the cream bg on all edges */}
+      <div
         style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          objectPosition: 'center center',
+          inset: 0,
+          WebkitMaskImage:
+            'radial-gradient(ellipse 58% 80% at 50% 50%, black 40%, transparent 100%)',
+          maskImage:
+            'radial-gradient(ellipse 58% 80% at 50% 50%, black 40%, transparent 100%)',
         }}
-      />
+      >
+        <img
+          src="/vitruvian.jpg"
+          alt="Vitruvian Man"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            objectPosition: 'center center',
+          }}
+        />
+      </div>
 
       {/* ── Header ── */}
       <div
