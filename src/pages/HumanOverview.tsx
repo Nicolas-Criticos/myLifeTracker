@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -10,9 +11,20 @@ interface ChakraNode {
   title: string
   summary: string
   color: string
-  top: number        // % from top of container
+  top: number
   side: 'left' | 'right'
   pdf?: string
+}
+
+interface Particle {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  r: number
+  alpha: number
+  alphaDir: number
+  alphaSpeed: number
 }
 
 // ── Data ───────────────────────────────────────────────────────────────────────
@@ -94,56 +106,309 @@ const CHAKRAS: ChakraNode[] = [
   },
 ]
 
-// ── Layout constants ───────────────────────────────────────────────────────────
+// ── Constants ──────────────────────────────────────────────────────────────────
 
-const DOT_LEFT = 50   // % x-position of the chakra spine — true centre of container
-const LINE_LEN = 16   // SVG units
-const TOPBAR_H = 64   // px — matches TopBar height
+const DOT_LEFT = 50
+const LINE_LEN = 16
+const TOPBAR_H = 64
+const PARTICLE_COUNT = 55
+const BG_COLOR = '#e8dcc8'
 
-// ── Injected styles ────────────────────────────────────────────────────────────
+// ── Particle canvas ────────────────────────────────────────────────────────────
+
+function useParticleCanvas(canvasRef: React.RefObject<HTMLCanvasElement | null>) {
+  const rafRef = useRef<number>(0)
+  const particlesRef = useRef<Particle[]>([])
+
+  const init = useCallback((w: number, h: number) => {
+    particlesRef.current = Array.from({ length: PARTICLE_COUNT }, () => ({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.18,
+      vy: (Math.random() - 0.5) * 0.12,
+      r: Math.random() * 1.4 + 0.3,
+      alpha: Math.random() * 0.35 + 0.05,
+      alphaDir: Math.random() > 0.5 ? 1 : -1,
+      alphaSpeed: Math.random() * 0.0015 + 0.0004,
+    }))
+  }, [])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
+      init(canvas.width, canvas.height)
+    }
+    resize()
+    window.addEventListener('resize', resize)
+
+    const draw = () => {
+      const { width: w, height: h } = canvas
+      ctx.clearRect(0, 0, w, h)
+
+      for (const p of particlesRef.current) {
+        // drift
+        p.x += p.vx
+        p.y += p.vy
+        // wrap
+        if (p.x < -4) p.x = w + 4
+        if (p.x > w + 4) p.x = -4
+        if (p.y < -4) p.y = h + 4
+        if (p.y > h + 4) p.y = -4
+        // breathe
+        p.alpha += p.alphaDir * p.alphaSpeed
+        if (p.alpha > 0.42 || p.alpha < 0.04) p.alphaDir *= -1
+
+        // draw dot — warm dusty gold tint
+        ctx.beginPath()
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(140, 115, 70, ${p.alpha})`
+        ctx.fill()
+      }
+
+      rafRef.current = requestAnimationFrame(draw)
+    }
+
+    rafRef.current = requestAnimationFrame(draw)
+
+    return () => {
+      window.removeEventListener('resize', resize)
+      cancelAnimationFrame(rafRef.current)
+    }
+  }, [canvasRef, init])
+}
+
+// ── Injected CSS ───────────────────────────────────────────────────────────────
 
 const STYLES = `
 @import url("https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap");
 
-.ho-dot  { cursor: pointer; }
+/* ── Entry animation ── */
+@keyframes ho-fadein {
+  from { opacity: 0; transform: scale(1.012); filter: blur(6px); }
+  to   { opacity: 1; transform: scale(1);     filter: blur(0px); }
+}
+
+/* ── Chakra dot pulse ── */
+@keyframes ho-pulse {
+  0%, 100% { box-shadow: var(--glow-sm); transform: translate(-50%,-50%) scale(1); }
+  50%       { box-shadow: var(--glow-lg); transform: translate(-50%,-50%) scale(1.25); }
+}
+
+/* ── Scan line sweep ── */
+@keyframes ho-scan {
+  0%   { top: 0%;   opacity: 0; }
+  5%   { opacity: 0.18; }
+  95%  { opacity: 0.18; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ── Bracket corner flicker ── */
+@keyframes ho-flicker {
+  0%, 100% { opacity: 0.22; }
+  50%       { opacity: 0.38; }
+}
+
+/* ── Label panel slide in ── */
+@keyframes ho-panel-in {
+  from { opacity: 0; transform: translateY(-46%) translateX(6px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+@keyframes ho-panel-in-left {
+  from { opacity: 0; transform: translateY(-46%) translateX(-6px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+
+/* ── Description card reveal ── */
+@keyframes ho-card-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ho-page {
+  animation: ho-fadein 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ho-dot {
+  cursor: pointer;
+  animation: ho-pulse var(--pulse-dur, 3.2s) ease-in-out infinite;
+}
+
 .ho-label {
   cursor: pointer;
   transition: opacity 0.15s;
   user-select: none;
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 0.82rem;
+  color: #2a1a08;
+  line-height: 1.2;
+  text-shadow: 0 1px 4px rgba(232,220,195,0.9), 0 0 8px rgba(232,220,195,0.7);
 }
 .ho-label:hover { opacity: 0.6; }
+
+.ho-node-right {
+  animation: ho-panel-in 0.55s cubic-bezier(0.22,1,0.36,1) both;
+}
+.ho-node-left {
+  animation: ho-panel-in-left 0.55s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+.ho-card {
+  animation: ho-card-in 0.3s ease both;
+}
+
+.ho-scan {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(100,80,40,0.5) 40%, rgba(100,80,40,0.5) 60%, transparent 100%);
+  pointer-events: none;
+  z-index: 3;
+  animation: ho-scan 9s linear infinite;
+}
+
+.ho-corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  pointer-events: none;
+  z-index: 8;
+  animation: ho-flicker 4s ease-in-out infinite;
+}
+
+.ho-back-btn {
+  position: fixed;
+  top: 80px;
+  left: 20px;
+  z-index: 20;
+  background: rgba(232,220,195,0.75);
+  border: 1px solid rgba(90,74,48,0.3);
+  backdropFilter: blur(6px);
+  color: #3d2e1a;
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  cursor: pointer;
+  border-radius: 2px;
+  letter-spacing: 0.06em;
+  transition: background 0.2s, opacity 0.2s;
+}
+.ho-back-btn:hover { background: rgba(220,208,183,0.92); opacity: 0.85; }
+
+.ho-glyph {
+  font-family: "IM Fell English", serif;
+  font-style: italic;
+  color: rgba(90,74,48,0.18);
+  pointer-events: none;
+  user-select: none;
+  position: absolute;
+  z-index: 2;
+  animation: ho-flicker 6s ease-in-out infinite;
+}
 `
+
+// ── Corner bracket SVG ─────────────────────────────────────────────────────────
+
+function CornerBracket({ pos }: { pos: 'tl' | 'tr' | 'bl' | 'br' }) {
+  const style: React.CSSProperties = {
+    top:    pos.startsWith('t') ? '12px' : undefined,
+    bottom: pos.startsWith('b') ? '12px' : undefined,
+    left:   pos.endsWith('l')   ? '12px' : undefined,
+    right:  pos.endsWith('r')   ? '12px' : undefined,
+  }
+  // rotate per corner
+  const rot = { tl: 0, tr: 90, br: 180, bl: 270 }[pos]
+
+  return (
+    <div className="ho-corner" style={style}>
+      <svg
+        width="28" height="28" viewBox="0 0 28 28"
+        style={{ transform: `rotate(${rot}deg)` }}
+        fill="none"
+      >
+        <path d="M2 14 L2 2 L14 2" stroke="rgba(90,74,48,0.45)" strokeWidth="1.2"/>
+      </svg>
+    </div>
+  )
+}
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function HumanOverview() {
-  const [active, setActive] = useState<ChakraId | null>(null)
+  const [active, setActive]     = useState<ChakraId | null>(null)
+  const [mounted, setMounted]   = useState(false)
+  const canvasRef               = useRef<HTMLCanvasElement>(null)
+  const navigate                = useNavigate()
+
+  useEffect(() => { setMounted(true) }, [])
+
+  useParticleCanvas(canvasRef)
 
   const toggle = (id: ChakraId) =>
     setActive(prev => (prev === id ? null : id))
 
+  // Stagger animation delays per node so they appear sequentially
+  const nodeDelay = (i: number) => `${0.35 + i * 0.08}s`
+
   return (
     <div
+      className={mounted ? 'ho-page' : ''}
       style={{
         position: 'relative',
         width: '100vw',
         minHeight: `calc(100vh - ${TOPBAR_H}px)`,
-        background: '#e8dcc8',
+        background: BG_COLOR,
         overflow: 'hidden',
       }}
     >
       <style>{STYLES}</style>
 
-      {/* ── Vitruvian background ── */}
-      {/* Wrapper applies a CSS mask so the image fades into the cream bg on all edges */}
+      {/* ── Particle canvas ── */}
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          zIndex: 1,
+        }}
+      />
+
+      {/* ── Scan line ── */}
+      <div className="ho-scan" />
+
+      {/* ── Corner brackets ── */}
+      {(['tl','tr','bl','br'] as const).map(p => (
+        <CornerBracket key={p} pos={p} />
+      ))}
+
+      {/* ── Ambient glyphs ── */}
+      <div className="ho-glyph" style={{ fontSize:'4.5rem', top:'6%',  left:'5%',  animationDelay:'0s'   }}>φ</div>
+      <div className="ho-glyph" style={{ fontSize:'3.2rem', top:'72%', left:'4%',  animationDelay:'1.5s' }}>∞</div>
+      <div className="ho-glyph" style={{ fontSize:'2.8rem', top:'20%', right:'4%', animationDelay:'3s'   }}>Ω</div>
+      <div className="ho-glyph" style={{ fontSize:'3.8rem', top:'78%', right:'5%', animationDelay:'2s'   }}>△</div>
+      <div className="ho-glyph" style={{ fontSize:'2rem',   top:'52%', left:'3%',  animationDelay:'0.8s' }}>VII</div>
+      <div className="ho-glyph" style={{ fontSize:'1.6rem', top:'42%', right:'3%', animationDelay:'4s'   }}>1998</div>
+
+      {/* ── Vitruvian — faded into background ── */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
           WebkitMaskImage:
-            'radial-gradient(ellipse 58% 80% at 50% 50%, black 40%, transparent 100%)',
+            'radial-gradient(ellipse 52% 78% at 50% 50%, black 30%, rgba(0,0,0,0.6) 55%, transparent 100%)',
           maskImage:
-            'radial-gradient(ellipse 58% 80% at 50% 50%, black 40%, transparent 100%)',
+            'radial-gradient(ellipse 52% 78% at 50% 50%, black 30%, rgba(0,0,0,0.6) 55%, transparent 100%)',
+          zIndex: 2,
         }}
       >
         <img
@@ -157,6 +422,11 @@ export default function HumanOverview() {
           }}
         />
       </div>
+
+      {/* ── Back button ── */}
+      <button className="ho-back-btn" onClick={() => navigate('/')}>
+        ← dashboard
+      </button>
 
       {/* ── Header ── */}
       <div
@@ -174,9 +444,10 @@ export default function HumanOverview() {
           style={{
             fontFamily: '"IM Fell English", serif',
             fontStyle: 'italic',
-            fontSize: '1.4rem',
-            letterSpacing: '0.15em',
+            fontSize: '1.5rem',
+            letterSpacing: '0.12em',
             color: '#3d2e1a',
+            textShadow: '0 2px 12px rgba(232,220,195,0.7)',
           }}
         >
           Nicolas Criticos
@@ -185,17 +456,24 @@ export default function HumanOverview() {
           style={{
             fontFamily: '"IM Fell English", serif',
             fontStyle: 'italic',
-            fontSize: '0.82rem',
-            letterSpacing: '0.08em',
-            color: '#5a4a30',
-            marginTop: '4px',
+            fontSize: '0.8rem',
+            letterSpacing: '0.1em',
+            color: '#6a5840',
+            marginTop: '3px',
           }}
         >
           Born 13 March 1998 · Johannesburg
         </div>
+        {/* thin rule */}
+        <div style={{
+          margin: '6px auto 0',
+          width: '120px',
+          height: '1px',
+          background: 'linear-gradient(90deg, transparent, rgba(90,74,48,0.35), transparent)',
+        }} />
       </div>
 
-      {/* ── SVG overlay: architect lines + tick marks ── */}
+      {/* ── SVG: architect lines + tick marks ── */}
       <svg
         style={{
           position: 'absolute',
@@ -203,36 +481,33 @@ export default function HumanOverview() {
           width: '100%',
           height: '100%',
           pointerEvents: 'none',
-          zIndex: 2,
+          zIndex: 4,
         }}
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         aria-hidden="true"
       >
         {CHAKRAS.map(chakra => {
-          const y = chakra.top
-          const x2 =
-            chakra.side === 'right'
-              ? DOT_LEFT + LINE_LEN
-              : DOT_LEFT - LINE_LEN
+          const y  = chakra.top
+          const x2 = chakra.side === 'right' ? DOT_LEFT + LINE_LEN : DOT_LEFT - LINE_LEN
           return (
             <g key={chakra.id}>
-              {/* Horizontal line */}
               <line
-                x1={DOT_LEFT} y1={y}
-                x2={x2}        y2={y}
-                stroke="#5a4a30"
-                strokeWidth="0.8"
-                opacity="0.6"
+                x1={DOT_LEFT} y1={y} x2={x2} y2={y}
+                stroke="#5a4a30" strokeWidth="0.5" opacity="0.5"
                 vectorEffect="non-scaling-stroke"
               />
-              {/* Tick mark at line end */}
+              {/* small tick */}
               <line
-                x1={x2} y1={y - 0.5}
-                x2={x2} y2={y + 0.5}
-                stroke="#5a4a30"
-                strokeWidth="0.8"
-                opacity="0.75"
+                x1={x2} y1={y - 0.6} x2={x2} y2={y + 0.6}
+                stroke="#5a4a30" strokeWidth="0.7" opacity="0.65"
+                vectorEffect="non-scaling-stroke"
+              />
+              {/* tiny inner tick near dot */}
+              <line
+                x1={DOT_LEFT + (chakra.side === 'right' ? 1.5 : -1.5)} y1={y - 0.4}
+                x2={DOT_LEFT + (chakra.side === 'right' ? 1.5 : -1.5)} y2={y + 0.4}
+                stroke="#5a4a30" strokeWidth="0.5" opacity="0.4"
                 vectorEffect="non-scaling-stroke"
               />
             </g>
@@ -240,16 +515,21 @@ export default function HumanOverview() {
         })}
       </svg>
 
-      {/* ── Chakra nodes: dot + label + description ── */}
-      {CHAKRAS.map(chakra => {
+      {/* ── Chakra nodes ── */}
+      {CHAKRAS.map((chakra, i) => {
         const isActive = active === chakra.id
-        const isRight = chakra.side === 'right'
+        const isRight  = chakra.side === 'right'
         const lineEndX = isRight ? DOT_LEFT + LINE_LEN : DOT_LEFT - LINE_LEN
 
-        // Position the label div just past the tick mark
         const labelPos: React.CSSProperties = isRight
           ? { left: `${lineEndX + 1}%`, textAlign: 'left' }
           : { right: `${100 - (lineEndX - 1)}%`, textAlign: 'right' }
+
+        const glowSm = `0 0 6px ${chakra.color}88, 0 0 2px ${chakra.color}55`
+        const glowLg = `0 0 14px ${chakra.color}cc, 0 0 6px ${chakra.color}88, 0 0 2px ${chakra.color}`
+
+        // stagger pulse durations so they don't all pulse together
+        const pulseDur = `${2.8 + i * 0.35}s`
 
         return (
           <div key={chakra.id}>
@@ -262,47 +542,44 @@ export default function HumanOverview() {
                 left: `${DOT_LEFT}%`,
                 top: `${chakra.top}%`,
                 transform: 'translate(-50%, -50%)',
-                width: '10px',
-                height: '10px',
+                width: isActive ? '13px' : '10px',
+                height: isActive ? '13px' : '10px',
                 borderRadius: '50%',
                 background: chakra.color,
-                opacity: 0.65,
-                boxShadow: `0 0 8px ${chakra.color}99, 0 0 3px ${chakra.color}66`,
-                zIndex: 5,
-              }}
+                opacity: isActive ? 0.95 : 0.72,
+                zIndex: 6,
+                transition: 'width 0.2s, height 0.2s, opacity 0.2s',
+                ['--glow-sm' as string]: glowSm,
+                ['--glow-lg' as string]: glowLg,
+                ['--pulse-dur' as string]: pulseDur,
+              } as React.CSSProperties}
             />
 
-            {/* Label + panel container */}
+            {/* Label + panel */}
             <div
+              className={isRight ? 'ho-node-right' : 'ho-node-left'}
               style={{
                 position: 'absolute',
                 top: `${chakra.top}%`,
                 ...labelPos,
                 transform: 'translateY(-50%)',
-                zIndex: 6,
+                zIndex: 7,
                 maxWidth: '220px',
                 textAlign: isRight ? 'left' : 'right',
+                animationDelay: nodeDelay(i),
+                animationFillMode: 'both',
               }}
             >
-              {/* Clickable label */}
               <div
                 className="ho-label"
                 onClick={() => toggle(chakra.id)}
-                style={{
-                  fontFamily: '"IM Fell English", serif',
-                  fontStyle: 'italic',
-                  fontSize: '0.82rem',
-                  color: '#2a1a08',
-                  lineHeight: 1.2,
-                  textShadow: '0 1px 4px rgba(232,220,195,0.9), 0 0 8px rgba(232,220,195,0.7)',
-                }}
               >
                 {chakra.label}
               </div>
 
-              {/* Description panel — open when active */}
               {isActive && (
                 <div
+                  className="ho-card"
                   style={{
                     marginTop: '7px',
                     fontFamily: '"IM Fell English", serif',
@@ -310,30 +587,28 @@ export default function HumanOverview() {
                     color: '#2a1a08',
                     maxWidth: '220px',
                     lineHeight: 1.7,
-                    background: 'rgba(232, 220, 195, 0.88)',
-                    backdropFilter: 'blur(3px)',
-                    padding: '8px 10px',
+                    background: 'rgba(240, 230, 210, 0.92)',
+                    backdropFilter: 'blur(6px)',
+                    padding: '10px 12px',
                     borderRadius: '2px',
-                    boxShadow: '0 2px 12px rgba(44, 30, 10, 0.18)',
+                    borderLeft: isRight ? `2px solid ${chakra.color}88` : 'none',
+                    borderRight: isRight ? 'none' : `2px solid ${chakra.color}88`,
+                    boxShadow: `0 2px 16px rgba(44,30,10,0.15), 0 0 0 0.5px rgba(90,74,48,0.15)`,
                   }}
                 >
-                  {/* Title */}
-                  <div
-                    style={{
-                      fontSize: '0.76rem',
-                      color: '#3d2e1a',
-                      marginBottom: '5px',
-                    }}
-                  >
+                  <div style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 'normal',
+                    color: chakra.color,
+                    marginBottom: '5px',
+                    letterSpacing: '0.04em',
+                    filter: 'brightness(0.75)',
+                  }}>
                     {chakra.title}
                   </div>
-
-                  {/* Body */}
-                  <div style={{ fontSize: '0.72rem' }}>
+                  <div style={{ fontSize: '0.71rem', color: '#3a2a14' }}>
                     {chakra.summary}
                   </div>
-
-                  {/* PDF link */}
                   {chakra.pdf && (
                     <a
                       href={chakra.pdf}
@@ -341,14 +616,14 @@ export default function HumanOverview() {
                       rel="noopener noreferrer"
                       style={{
                         display: 'inline-block',
-                        marginTop: '7px',
+                        marginTop: '8px',
                         fontFamily: '"IM Fell English", serif',
                         fontStyle: 'italic',
                         fontSize: '0.65rem',
                         color: '#5a4a30',
                         textDecoration: 'underline',
                         textUnderlineOffset: '2px',
-                        opacity: 0.85,
+                        opacity: 0.75,
                       }}
                     >
                       view source ↗
@@ -360,6 +635,33 @@ export default function HumanOverview() {
           </div>
         )
       })}
+
+      {/* ── Bottom inscription ── */}
+      <div style={{
+        position: 'absolute',
+        bottom: '16px',
+        left: 0,
+        right: 0,
+        textAlign: 'center',
+        pointerEvents: 'none',
+        zIndex: 8,
+      }}>
+        <div style={{
+          margin: '0 auto 6px',
+          width: '80px',
+          height: '1px',
+          background: 'linear-gradient(90deg, transparent, rgba(90,74,48,0.3), transparent)',
+        }} />
+        <div style={{
+          fontFamily: '"IM Fell English", serif',
+          fontStyle: 'italic',
+          fontSize: '0.65rem',
+          letterSpacing: '0.14em',
+          color: 'rgba(90,74,48,0.45)',
+        }}>
+          Rahu Mahadasha · Saturn Antardasha · 2024–2026
+        </div>
+      </div>
     </div>
   )
 }
