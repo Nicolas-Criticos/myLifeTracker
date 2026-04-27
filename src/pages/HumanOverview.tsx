@@ -67,7 +67,7 @@ const CHAKRAS: ChakraNode[] = [
     label: 'Heart · Nicolas Criticos',
     title: 'Skills & Experience',
     summary:
-      'BEng Electrical Engineering, University of the Witwatersrand (2017–2022). Earthship sustainability design (Biotonomy, 2023). Ayurveda studies (Heal World, 2024). Retreat Manager at Phakalane Retreat — solar systems, permaculture greenhouse, earthship construction, contractor management. Light sculptor & photographer with Jake Michael Singer (Johannesburg, 2023). Retreat host for Brothers of Light (health & wellness). Current: farm manager, olive rehabilitation lead, DTC olive oil brand founder, and builder of the Samsara eco-community vision.',
+      'Qualified electrical engineer with a deep commitment to sustainable living and regenerative agriculture. Combines technical engineering expertise with hands-on experience in permaculture, earthship construction, and organic farming. Currently leading the rehabilitation of 16,000 neglected olive trees in the Swartberg Karoo while managing a boutique guest farm and building a direct-to-consumer olive oil brand. Driven by the vision of building systems that leave land, people, and communities richer than they were found.',
     color: '#1a7a2a',
     top: 36,
     side: 'left',
