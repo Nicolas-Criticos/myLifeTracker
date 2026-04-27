@@ -32,10 +32,10 @@ interface Particle {
 const CHAKRAS: ChakraNode[] = [
   {
     id: 'crown',
-    label: 'Crown',
-    title: 'Crown · Awaiting',
+    label: 'Crown · AI Synthesis',
+    title: 'Who You Are',
     summary:
-      'This node is open. Future inputs: additional charts, sacred geometry, or personal revelation.',
+      'A 7-life-path Projector with Pisces Sun and Taurus Vedic Ascendant — you are a rare combination of boundless vision and deep groundedness. You see what others miss, build what others dream, and guide without needing to lead loudly. The Earth Tiger adds patient courage. You are in Rahu Dasha (2018–2036), the great expansion of your life — currently in the Saturn sub-period (2024–2026): the grind, the roots, the testing. This is not a time to rush. Build deep. What you are planting now will hold everything that comes.',
     color: '#7B00CC',
     top: 15,
     side: 'right',
@@ -64,13 +64,14 @@ const CHAKRAS: ChakraNode[] = [
   },
   {
     id: 'heart',
-    label: 'Heart · AI Synthesis',
-    title: 'Who You Are',
+    label: 'Heart · Nicolas Criticos',
+    title: 'Skills & Experience',
     summary:
-      'A 7-life-path Projector with Pisces Sun and Taurus Vedic Ascendant — you are a rare combination of boundless vision and deep groundedness. You see what others miss, build what others dream, and guide without needing to lead loudly. The Earth Tiger adds patient courage. You are in Rahu Dasha (2018–2036), the great expansion of your life — currently in the Saturn sub-period (2024–2026): the grind, the roots, the testing. This is not a time to rush. Build deep. What you are planting now will hold everything that comes.',
+      'BEng Electrical Engineering, University of the Witwatersrand (2017–2022). Earthship sustainability design (Biotonomy, 2023). Ayurveda studies (Heal World, 2024). Retreat Manager at Phakalane Retreat — solar systems, permaculture greenhouse, earthship construction, contractor management. Light sculptor & photographer with Jake Michael Singer (Johannesburg, 2023). Retreat host for Brothers of Light (health & wellness). Current: farm manager, olive rehabilitation lead, DTC olive oil brand founder, and builder of the Samsara eco-community vision.',
     color: '#1a7a2a',
     top: 36,
     side: 'left',
+    pdf: '/docs/cv-nicolas-criticos.pdf',
   },
   {
     id: 'solar',
