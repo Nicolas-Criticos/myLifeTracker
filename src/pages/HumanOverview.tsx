@@ -112,7 +112,7 @@ const DOT_LEFT = 50
 const LINE_LEN = 16
 const TOPBAR_H = 64
 const PARTICLE_COUNT = 55
-const BG_COLOR = '#e8dcc8'
+const BG_COLOR = '#f0e9d8'
 
 // ── Particle canvas ────────────────────────────────────────────────────────────
 
@@ -190,8 +190,9 @@ const STYLES = `
 
 /* ── Entry animation ── */
 @keyframes ho-fadein {
-  from { opacity: 0; transform: scale(1.012); filter: blur(6px); }
-  to   { opacity: 1; transform: scale(1);     filter: blur(0px); }
+  0%   { opacity: 0; transform: scale(1.018); filter: blur(10px); }
+  40%  { opacity: 0.4; filter: blur(3px); }
+  100% { opacity: 1; transform: scale(1);   filter: blur(0px); }
 }
 
 /* ── Chakra dot pulse ── */
@@ -231,7 +232,7 @@ const STYLES = `
 }
 
 .ho-page {
-  animation: ho-fadein 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ho-fadein 2.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .ho-dot {
@@ -399,28 +400,53 @@ export default function HumanOverview() {
       <div className="ho-glyph" style={{ fontSize:'2rem',   top:'52%', left:'3%',  animationDelay:'0.8s' }}>VII</div>
       <div className="ho-glyph" style={{ fontSize:'1.6rem', top:'42%', right:'3%', animationDelay:'4s'   }}>1998</div>
 
-      {/* ── Vitruvian — faded into background ── */}
+      {/* ── Vitruvian — faded into background, floating ── */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
-          WebkitMaskImage:
-            'radial-gradient(ellipse 52% 78% at 50% 50%, black 30%, rgba(0,0,0,0.6) 55%, transparent 100%)',
-          maskImage:
-            'radial-gradient(ellipse 52% 78% at 50% 50%, black 30%, rgba(0,0,0,0.6) 55%, transparent 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           zIndex: 2,
+          pointerEvents: 'none',
         }}
       >
-        <img
-          src="/vitruvian.jpg"
-          alt="Vitruvian Man"
+        {/* Shadow halo behind image — gives the floating/raised look */}
+        <div style={{
+          position: 'absolute',
+          width: '52%',
+          height: '82%',
+          borderRadius: '50%',
+          background: 'radial-gradient(ellipse at center, rgba(80,60,30,0.18) 0%, rgba(80,60,30,0.08) 50%, transparent 75%)',
+          filter: 'blur(28px)',
+          zIndex: 1,
+          transform: 'translateY(2%)',
+        }} />
+        {/* Image with edge fade mask */}
+        <div
           style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            objectPosition: 'center center',
+            position: 'absolute',
+            inset: 0,
+            WebkitMaskImage:
+              'radial-gradient(ellipse 52% 78% at 50% 50%, black 30%, rgba(0,0,0,0.75) 52%, rgba(0,0,0,0.2) 72%, transparent 100%)',
+            maskImage:
+              'radial-gradient(ellipse 52% 78% at 50% 50%, black 30%, rgba(0,0,0,0.75) 52%, rgba(0,0,0,0.2) 72%, transparent 100%)',
+            zIndex: 2,
           }}
-        />
+        >
+          <img
+            src="/vitruvian.jpg"
+            alt="Vitruvian Man"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain',
+              objectPosition: 'center center',
+              filter: 'drop-shadow(0 8px 32px rgba(60,40,10,0.28)) drop-shadow(0 2px 8px rgba(60,40,10,0.18))',
+            }}
+          />
+        </div>
       </div>
 
       {/* ── Back button ── */}
