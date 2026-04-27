@@ -1,6 +1,7 @@
 import CategorySection from './CategorySection'
 import MomentumChart from './MomentumChart'
 import PatternAlert from './PatternAlert'
+import ReadingList from './ReadingList'
 import { getWeekRange, formatWeekRange, nowInSAST } from '../../lib/utils'
 import {
   useProjects, useTasks, useThisWeekLogs, useCurrentWeekReview, usePatterns, useDailyLogs,
@@ -132,6 +133,7 @@ export default function WeeklyDashboard() {
     : null
 
   return (
+    <>
     <div className="animate-in" style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 40px 80px' }}>
 
       {/* Hero */}
@@ -492,5 +494,8 @@ export default function WeeklyDashboard() {
       </div>
 
     </div>
+    {/* Reading list — floating icon top-right */}
+    <ReadingList />
+    </>
   )
 }
