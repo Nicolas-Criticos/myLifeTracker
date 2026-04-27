@@ -383,7 +383,7 @@ function BookDetail({ book, onClose }: { book: Book | 'new'; onClose: () => void
 
 // ── Main Panel ─────────────────────────────────────────────────────────────────
 
-export default function ReadingList({ inline: _inline = false }: { inline?: boolean }) {
+export default function ReadingList() {
   const [open, setOpen] = useState(false)
   const [selectedBook, setSelectedBook] = useState<Book | 'new' | null>(null)
   const { data: books = [] } = useBooks()
@@ -394,23 +394,27 @@ export default function ReadingList({ inline: _inline = false }: { inline?: bool
 
   return (
     <>
-      {/* Trigger button */}
+      {/* Trigger button — fixed below TopBar, right corner */}
       <button
         onClick={() => setOpen(true)}
         title="Reading list"
         style={{
-          position: 'relative',
-          width: '34px',
-          height: '34px',
+          position: 'fixed',
+          top: '72px',
+          right: '24px',
+          zIndex: 40,
+          width: '38px',
+          height: '38px',
           borderRadius: '50%',
-          background: open ? 'rgba(90,114,71,0.1)' : 'transparent',
+          background: open ? 'rgba(90,114,71,0.12)' : 'rgba(248,245,238,0.92)',
           border: '1px solid rgba(44,42,37,0.1)',
+          backdropFilter: 'blur(8px)',
+          boxShadow: '0 2px 10px rgba(44,42,37,0.08)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'all 200ms ease',
-          flexShrink: 0,
         }}
       >
         {/* Book icon */}
