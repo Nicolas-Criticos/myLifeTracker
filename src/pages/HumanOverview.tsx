@@ -25,7 +25,7 @@ const CHAKRAS: ChakraNode[] = [
     summary:
       'This node is open. Future inputs: additional charts, sacred geometry, or personal revelation.',
     color: '#6B00B3',
-    top: 11,
+    top: 9,
     side: 'right',
   },
   {
@@ -35,7 +35,7 @@ const CHAKRAS: ChakraNode[] = [
     summary:
       'Vedic soul chart. Taurus Ascendant (Mrigashirsha): builder, sensual, land-rooted. Sun + Jupiter + Ketu in 10th (Aquarius): spiritual purpose, public detachment, cosmic contribution. Strong 11th house (Mars, Mercury, Saturn in Pisces): humanitarian ideals, disciplined creativity, networked action. Rahu in Leo 4th: ancestral healing, home as destiny. Moon in Virgo 5th (Uttara Phalguni): devoted service through joy. Current Maha Dasha: Rahu (2018–2036) — Saturn sub-dasha (Jan 2024 – Nov 2026): structure, discipline, karmic building.',
     color: '#2a0080',
-    top: 16,
+    top: 14,
     side: 'left',
     pdf: '/docs/vedic-astrology.pdf',
   },
@@ -46,7 +46,7 @@ const CHAKRAS: ChakraNode[] = [
     summary:
       'Sun in Pisces (House IX): visionary, spiritual, boundless imagination, truth-seeker. Moon in Virgo (House III): precise emotional world, service-oriented, analytical heart. Gemini Rising: quick-minded, adaptable, communicative face to the world. Heavy Aries MC with Mercury, Mars, Saturn in 10th: bold, pioneering public presence. Aquarius stellium in 8th (Venus, Uranus, Neptune): depth, transformation, unconventional soul. Jupiter conjunct Sun in Pisces: philosopher, traveller, teacher.',
     color: '#004488',
-    top: 24,
+    top: 22,
     side: 'right',
     pdf: '/docs/western-astrology.pdf',
   },
@@ -57,7 +57,7 @@ const CHAKRAS: ChakraNode[] = [
     summary:
       'A 7-life-path Projector with Pisces Sun and Taurus Vedic Ascendant — you are a rare combination of boundless vision and deep groundedness. You see what others miss, build what others dream, and guide without needing to lead loudly. The Earth Tiger adds patient courage. You are in Rahu Dasha (2018–2036), the great expansion of your life — currently in the Saturn sub-period (2024–2026): the grind, the roots, the testing. This is not a time to rush. Build deep. What you are planting now will hold everything that comes.',
     color: '#1a5c2a',
-    top: 35,
+    top: 32,
     side: 'left',
   },
   {
@@ -67,7 +67,7 @@ const CHAKRAS: ChakraNode[] = [
     summary:
       'You are not built to initiate — you are built to see. Your gift is reading systems, energy, and people with uncanny precision. The strategy is to wait for genuine recognition and invitation before acting. When aligned: Success. When not: Bitterness. Over-initiating drains you. Rest is not laziness — it is preparation. You are a guide, not a generator.',
     color: '#8B7A00',
-    top: 44,
+    top: 40,
     side: 'right',
     pdf: '/docs/human-design.pdf',
   },
@@ -78,7 +78,7 @@ const CHAKRAS: ChakraNode[] = [
     summary:
       'Life Path 7 · Destiny 7 · Soul 4 · Personality 3 · Maturity 5. The double-7 stamps your life with a single mission: find truth. Your Soul desires order and foundation; your Personality charms and inspires. Currently in your First Pinnacle (7) — a time of self-discovery and spiritual development. Building years ahead.',
     color: '#8B5A00',
-    top: 54,
+    top: 50,
     side: 'left',
     pdf: '/docs/numerology.pdf',
   },
@@ -89,7 +89,7 @@ const CHAKRAS: ChakraNode[] = [
     summary:
       "Courageous and grounded. The Earth modifier tempers the Tiger's fire — you build before you leap. Magnetic, loyal, fierce in protection of what matters. Strategic patience is your edge.",
     color: '#8B2500',
-    top: 65,
+    top: 60,
     side: 'right',
   },
 ]
@@ -97,7 +97,7 @@ const CHAKRAS: ChakraNode[] = [
 // ── Layout constants ───────────────────────────────────────────────────────────
 
 const DOT_LEFT = 49   // % x-position of the chakra spine
-const LINE_LEN = 14   // SVG units (viewBox 0-100) — ~150-200px at typical viewport
+const LINE_LEN = 16   // SVG units
 const TOPBAR_H = 64   // px — matches TopBar height
 
 // ── Injected styles ────────────────────────────────────────────────────────────
@@ -127,8 +127,9 @@ export default function HumanOverview() {
       style={{
         position: 'relative',
         width: '100vw',
-        height: `calc(100vh - ${TOPBAR_H}px)`,
-        overflow: 'visible',
+        minHeight: `calc(100vh - ${TOPBAR_H}px)`,
+        background: '#e8dcc8',
+        overflow: 'hidden',
       }}
     >
       <style>{STYLES}</style>
@@ -143,8 +144,8 @@ export default function HumanOverview() {
           left: 0,
           width: '100%',
           height: '100%',
-          objectFit: 'cover',
-          objectPosition: 'center top',
+          objectFit: 'contain',
+          objectPosition: 'center center',
         }}
       />
 
@@ -238,8 +239,8 @@ export default function HumanOverview() {
 
         // Position the label div just past the tick mark
         const labelPos: React.CSSProperties = isRight
-          ? { left: `${lineEndX + 1}%` }
-          : { right: `${100 - (lineEndX - 1)}%` }
+          ? { left: `${lineEndX + 1}%`, textAlign: 'left' }
+          : { right: `${100 - (lineEndX - 1)}%`, textAlign: 'right' }
 
         return (
           <div key={chakra.id}>
