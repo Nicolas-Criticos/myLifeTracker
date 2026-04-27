@@ -283,8 +283,9 @@ export default function HumanOverview() {
                   fontFamily: '"IM Fell English", serif',
                   fontStyle: 'italic',
                   fontSize: '0.82rem',
-                  color: '#3d2e1a',
+                  color: '#2a1a08',
                   lineHeight: 1.2,
+                  textShadow: '0 1px 4px rgba(232,220,195,0.9), 0 0 8px rgba(232,220,195,0.7)',
                 }}
               >
                 {chakra.label}
@@ -297,9 +298,14 @@ export default function HumanOverview() {
                     marginTop: '7px',
                     fontFamily: '"IM Fell English", serif',
                     fontStyle: 'italic',
-                    color: '#4a3a28',
+                    color: '#2a1a08',
                     maxWidth: '220px',
                     lineHeight: 1.7,
+                    background: 'rgba(232, 220, 195, 0.88)',
+                    backdropFilter: 'blur(3px)',
+                    padding: '8px 10px',
+                    borderRadius: '2px',
+                    boxShadow: '0 2px 12px rgba(44, 30, 10, 0.18)',
                   }}
                 >
                   {/* Title */}
