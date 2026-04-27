@@ -438,11 +438,11 @@ export default function ReadingList() {
       {/* Slide-in panel */}
       {open && (
         <>
-          <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 90 }} />
+          <div onClick={() => setOpen(false)} style={{ position: 'fixed', top: '64px', left: 0, right: 0, bottom: 0, zIndex: 90 }} />
           <div
             style={{
               position: 'fixed',
-              top: 0,
+              top: '64px',
               right: 0,
               bottom: 0,
               zIndex: 100,
