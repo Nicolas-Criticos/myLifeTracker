@@ -63,7 +63,7 @@ function InlineTaskManager({ projectId, tasks }: { projectId: string; tasks: Tas
       scheduled_date: null,
       completed_at: null,
       dropped_reason: null,
-      recurrence: null,
+
     })
     setNewTitle('')
     setNewPriority('normal')
