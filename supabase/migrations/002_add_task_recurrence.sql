@@ -1,0 +1,12 @@
+-- Migration: Add recurrence column to ops_tasks
+-- Created: 2026-04-29
+--
+-- Run this SQL in the Supabase SQL editor for project: toxgvaqctxbqhqitmxkm
+--
+-- ALTER TABLE ops_tasks
+--   ADD COLUMN recurrence text CHECK (recurrence IN ('daily', 'weekdays'));
+--
+-- This column is nullable by default (no recurrence = NULL).
+-- Values:
+--   'daily'    — repeats every day
+--   'weekdays' — repeats Mon–Fri only

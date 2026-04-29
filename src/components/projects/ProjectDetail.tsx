@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useUpdateProject, useCreateTask, useUpdateTask } from '../../lib/queries'
-import type { Project, Task, ProjectStatus, TaskStatus, TaskPriority } from '../../lib/supabase'
+import type { Project, Task, ProjectStatus, TaskStatus, TaskPriority, TaskRecurrence } from '../../lib/supabase'
 import { format, parseISO, isToday, isPast } from 'date-fns'
 import { nowInSAST } from '../../lib/utils'
 
@@ -66,6 +66,7 @@ export default function ProjectDetail({ project, tasks }: ProjectDetailProps) {
   const [newTitle, setNewTitle] = useState('')
   const [newPriority, setNewPriority] = useState<TaskPriority>('normal')
   const [newDate, setNewDate] = useState(todayStr)
+  const [newRecurrence, setNewRecurrence] = useState<TaskRecurrence | ''>('')
 
   const activeTasks = tasks.filter(t => t.status !== 'dropped')
   const completedTasks = tasks.filter(t => t.status === 'completed')
@@ -88,9 +89,11 @@ export default function ProjectDetail({ project, tasks }: ProjectDetailProps) {
       scheduled_date: newDate || null,
       completed_at: null,
       dropped_reason: null,
+      recurrence: newRecurrence || null,
     })
     setNewTitle('')
     setNewPriority('normal')
+    setNewRecurrence('')
     setShowAdd(false)
   }
 
@@ -284,6 +287,16 @@ export default function ProjectDetail({ project, tasks }: ProjectDetailProps) {
               <option value="high">High</option>
               <option value="critical">Critical</option>
             </select>
+            <select
+              value={newRecurrence}
+              onChange={e => setNewRecurrence(e.target.value as TaskRecurrence | '')}
+              style={{ ...INPUT, flex: 0.9, cursor: 'pointer' }}
+              title="Repeat"
+            >
+              <option value="">No repeat</option>
+              <option value="daily">Every day</option>
+              <option value="weekdays">Every weekday</option>
+            </select>
             <button onClick={handleAdd} disabled={!newTitle.trim()} style={{
               background: newTitle.trim() ? 'var(--olive)' : 'rgba(44,42,37,0.08)',
               color: newTitle.trim() ? 'white' : 'var(--ink-muted)',
@@ -365,20 +378,39 @@ export default function ProjectDetail({ project, tasks }: ProjectDetailProps) {
                     }}>
                       {task.title}
                     </p>
-                    {task.scheduled_date && (
-                      <p style={{
-                        fontFamily: 'var(--font-body)',
-                        fontSize: '0.65rem',
-                        fontWeight: 300,
-                        color: isOverdue ? '#a05050' : 'var(--ink-muted)',
-                        margin: '2px 0 0',
-                      }}>
-                        {isOverdue && '⚠ '}
-                        {isToday(parseISO(task.scheduled_date))
-                          ? 'Today'
-                          : format(parseISO(task.scheduled_date), 'EEE, MMM d')}
-                      </p>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
+                      {task.scheduled_date && (
+                        <p style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '0.65rem',
+                          fontWeight: 300,
+                          color: isOverdue ? '#a05050' : 'var(--ink-muted)',
+                          margin: 0,
+                        }}>
+                          {isOverdue && '⚠ '}
+                          {isToday(parseISO(task.scheduled_date))
+                            ? 'Today'
+                            : format(parseISO(task.scheduled_date), 'EEE, MMM d')}
+                        </p>
+                      )}
+                      {task.recurrence && (
+                        <span style={{
+                          fontFamily: 'var(--font-body)',
+                          fontSize: '0.58rem',
+                          fontWeight: 400,
+                          letterSpacing: '0.06em',
+                          color: accent,
+                          background: `${accent}18`,
+                          padding: '1px 7px',
+                          borderRadius: 'var(--radius-full)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                        }}>
+                          ↻ {task.recurrence === 'daily' ? 'Daily' : 'Weekdays'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               )

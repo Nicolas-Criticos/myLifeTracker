@@ -106,6 +106,11 @@ export default function TaskItem({ task, draggable = false }: TaskItemProps) {
             {task.scheduled_date && (
               <span className="text-[#64748b] text-xs">{task.scheduled_date}</span>
             )}
+            {task.recurrence && (
+              <span className="text-xs px-1.5 py-0.5 rounded font-medium bg-blue-500/10 text-blue-400">
+                ↻ {task.recurrence === 'daily' ? 'Daily' : 'Weekdays'}
+              </span>
+            )}
           </div>
         </div>
 

@@ -10,6 +10,7 @@ export type Category = 'FOUNDATION' | 'LEVERAGE' | 'EXPRESSION'
 export type ProjectStatus = 'active' | 'paused' | 'completed'
 export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'dropped' | 'rescheduled'
 export type TaskPriority = 'critical' | 'high' | 'normal' | 'low'
+export type TaskRecurrence = 'daily' | 'weekdays'
 export type RecommendedAction = 'continue' | 'shift' | 'pause'
 
 export interface Project {
@@ -33,6 +34,7 @@ export interface Task {
   scheduled_date: string | null
   completed_at: string | null
   dropped_reason: string | null
+  recurrence: TaskRecurrence | null
   created_at: string
 }
 
