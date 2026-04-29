@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import TaskList from './TaskList'
 import { categoryAccent } from '../../lib/utils'
-import type { Category, Project, Task } from '../../lib/supabase'
+import { useCreateTask, useUpdateTask } from '../../lib/queries'
+import type { Category, Project, Task, TaskPriority, TaskStatus } from '../../lib/supabase'
 
 interface ProjectListProps {
   projects: Project[]
@@ -12,9 +12,214 @@ interface ProjectListProps {
 const CATEGORIES: Category[] = ['FOUNDATION', 'LEVERAGE', 'EXPRESSION']
 
 const categoryConfig: Record<Category, { label: string; color: string; dot: string }> = {
-  FOUNDATION: { label: 'Foundation', color: 'var(--foundation)', dot: '#5c7a5c' },
-  LEVERAGE:   { label: 'Leverage',   color: 'var(--leverage)',   dot: '#4a6b8a' },
-  EXPRESSION: { label: 'Expression', color: 'var(--expression)', dot: '#8a6a3a' },
+  FOUNDATION: { label: 'Wellbeing',  color: 'var(--foundation)', dot: '#5c7a5c' },
+  LEVERAGE:   { label: 'Growth',     color: 'var(--leverage)',   dot: '#4a6b8a' },
+  EXPRESSION: { label: 'Creation',   color: 'var(--expression)', dot: '#8a6a3a' },
+}
+
+const INPUT: React.CSSProperties = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '0.82rem',
+  fontWeight: 300,
+  color: 'var(--ink)',
+  padding: '10px 14px',
+  border: '1px solid var(--border)',
+  borderRadius: '10px',
+  background: 'rgba(255, 252, 245, 0.8)',
+  outline: 'none',
+  width: '100%',
+}
+
+const PRIORITY_COLORS: Record<string, string> = {
+  critical: '#a05050',
+  high: '#8a6a3a',
+  normal: 'rgba(44, 42, 37, 0.25)',
+  low: 'rgba(44, 42, 37, 0.12)',
+}
+
+function InlineTaskManager({ projectId, tasks }: { projectId: string; tasks: Task[] }) {
+  const createTask = useCreateTask()
+  const updateTask = useUpdateTask()
+  const [showAdd, setShowAdd] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+  const [newPriority, setNewPriority] = useState<TaskPriority>('normal')
+
+  const activeTasks = tasks.filter(t => t.status !== 'dropped')
+  const priorityOrder: Record<string, number> = { critical: 0, high: 1, normal: 2, low: 3 }
+  const sortedTasks = [...activeTasks].sort((a, b) => {
+    if (a.status === 'completed' && b.status !== 'completed') return 1
+    if (b.status === 'completed' && a.status !== 'completed') return -1
+    return (priorityOrder[a.priority] ?? 2) - (priorityOrder[b.priority] ?? 2)
+  })
+
+  function handleAdd() {
+    if (!newTitle.trim()) return
+    createTask.mutate({
+      project_id: projectId,
+      title: newTitle.trim(),
+      description: null,
+      status: 'pending' as TaskStatus,
+      priority: newPriority,
+      scheduled_date: null,
+      completed_at: null,
+      dropped_reason: null,
+      recurrence: null,
+    })
+    setNewTitle('')
+    setNewPriority('normal')
+    setShowAdd(false)
+  }
+
+  function handleToggle(task: Task) {
+    if (task.status === 'completed') {
+      updateTask.mutate({ id: task.id, status: 'pending' as TaskStatus, completed_at: null })
+    } else {
+      updateTask.mutate({ id: task.id, status: 'completed' as TaskStatus, completed_at: new Date().toISOString() })
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+        <button
+          onClick={() => setShowAdd(!showAdd)}
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.65rem',
+            fontWeight: 400,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--olive)',
+            background: 'var(--olive-muted)',
+            border: 'none',
+            padding: '6px 14px',
+            borderRadius: 'var(--radius-full)',
+            cursor: 'pointer',
+          }}
+        >
+          + Add Task
+        </button>
+      </div>
+
+      {showAdd && (
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          marginBottom: '12px',
+          padding: '14px 16px',
+          background: 'rgba(107, 124, 92, 0.04)',
+          border: '1px solid rgba(107, 124, 92, 0.1)',
+          borderRadius: '12px',
+        }}>
+          <input
+            type="text"
+            value={newTitle}
+            onChange={e => setNewTitle(e.target.value)}
+            placeholder="Task title..."
+            style={{ ...INPUT, flex: 2 }}
+            autoFocus
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+          />
+          <select
+            value={newPriority}
+            onChange={e => setNewPriority(e.target.value as TaskPriority)}
+            style={{ ...INPUT, flex: 0.7, cursor: 'pointer' }}
+          >
+            <option value="low">Low</option>
+            <option value="normal">Normal</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+          <button
+            onClick={handleAdd}
+            disabled={!newTitle.trim()}
+            style={{
+              background: newTitle.trim() ? 'var(--olive)' : 'rgba(44,42,37,0.08)',
+              color: newTitle.trim() ? 'white' : 'var(--ink-muted)',
+              border: 'none', borderRadius: '10px', padding: '0 16px',
+              fontSize: '0.72rem', cursor: newTitle.trim() ? 'pointer' : 'default',
+              flexShrink: 0,
+            }}
+          >
+            Add
+          </button>
+          <button
+            onClick={() => setShowAdd(false)}
+            style={{
+              background: 'none', border: '1px solid var(--border)', borderRadius: '10px',
+              padding: '0 12px', fontSize: '0.72rem', cursor: 'pointer', color: 'var(--ink-muted)',
+              flexShrink: 0,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {sortedTasks.length === 0 ? (
+        <p style={{
+          fontFamily: 'var(--font-body)',
+          fontWeight: 300,
+          fontSize: '0.82rem',
+          color: 'var(--ink-muted)',
+          fontStyle: 'italic',
+          margin: 0,
+        }}>
+          No tasks yet.
+        </p>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          {sortedTasks.map(task => {
+            const isDone = task.status === 'completed'
+            return (
+              <div key={task.id} style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '10px 14px',
+                borderRadius: '10px',
+                background: isDone ? 'rgba(107,124,92,0.04)' : 'rgba(44,42,37,0.02)',
+                border: `1px solid ${isDone ? 'rgba(107,124,92,0.08)' : 'rgba(44,42,37,0.04)'}`,
+                marginBottom: '4px',
+              }}>
+                <button
+                  onClick={() => handleToggle(task)}
+                  style={{
+                    width: '18px', height: '18px', borderRadius: '5px',
+                    border: `2px solid ${isDone ? 'var(--olive)' : 'rgba(44,42,37,0.2)'}`,
+                    background: isDone ? 'var(--olive)' : 'transparent',
+                    cursor: 'pointer', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  {isDone && (
+                    <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                      <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
+                <div style={{
+                  width: '6px', height: '6px', borderRadius: '50%',
+                  background: PRIORITY_COLORS[task.priority] || PRIORITY_COLORS.normal,
+                  flexShrink: 0,
+                }} />
+                <p style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '0.82rem',
+                  fontWeight: isDone ? 300 : 400,
+                  color: isDone ? 'var(--ink-muted)' : 'var(--ink)',
+                  textDecoration: isDone ? 'line-through' : 'none',
+                  margin: 0, flex: 1,
+                }}>
+                  {task.title}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 const statusColors: Record<string, { bg: string; text: string }> = {
@@ -216,7 +421,7 @@ export default function ProjectList({ projects, tasks }: ProjectListProps) {
                           padding: '20px 24px',
                           background: 'rgba(255,252,245,0.4)',
                         }}>
-                          <TaskList projectId={project.id} tasks={projectTasks} />
+                          <InlineTaskManager projectId={project.id} tasks={projectTasks} />
                         </div>
                       )}
                     </div>

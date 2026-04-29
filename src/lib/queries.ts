@@ -334,20 +334,8 @@ export function useProducts() {
   })
 }
 
-export function useSalesData(days = 30) {
-  return useQuery({
-    queryKey: ['sales', days],
-    queryFn: async () => {
-      const since = format(new Date(Date.now() - days * 86400000), 'yyyy-MM-dd')
-      const { data, error } = await supabase
-        .from('sales')
-        .select('*')
-        .gte('date', since)
-        .order('date', { ascending: true })
-      if (error) throw error
-      return data as Sale[]
-    },
-  })
+export function useSalesData(_days = 30) {
+  return { data: [] as Sale[], isLoading: false }
 }
 
 export function useExpenses(days = 30) {
@@ -364,6 +352,14 @@ export function useExpenses(days = 30) {
       return data as Expense[]
     },
   })
+}
+
+export function useThisWeekSales() {
+  return { data: [] as Sale[], isLoading: false }
+}
+
+export function usePreviousWeekSales() {
+  return { data: [] as Sale[], isLoading: false }
 }
 
 export function useCreateSale() {
@@ -422,43 +418,6 @@ export function usePreviousWeekCheckins() {
   })
 }
 
-export function useThisWeekSales() {
-  const { start, end } = getWeekRange()
-  const startStr = format(start, 'yyyy-MM-dd')
-  const endStr = format(end, 'yyyy-MM-dd')
-  return useQuery({
-    queryKey: ['sales', 'week', startStr],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('sales')
-        .select('*')
-        .gte('date', startStr)
-        .lte('date', endStr)
-        .order('date', { ascending: true })
-      if (error) throw error
-      return data as Sale[]
-    },
-  })
-}
-
-export function usePreviousWeekSales() {
-  const { start, end } = getWeekRange(new Date(Date.now() - 7 * 86400000))
-  const startStr = format(start, 'yyyy-MM-dd')
-  const endStr = format(end, 'yyyy-MM-dd')
-  return useQuery({
-    queryKey: ['sales', 'prev_week', startStr],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('sales')
-        .select('*')
-        .gte('date', startStr)
-        .lte('date', endStr)
-        .order('date', { ascending: true })
-      if (error) throw error
-      return data as Sale[]
-    },
-  })
-}
 
 // ── COMMUNITY PROJECTS ────────────────────────────────────────────────────────
 
