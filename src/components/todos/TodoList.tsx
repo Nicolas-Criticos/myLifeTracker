@@ -375,44 +375,59 @@ export default function TodoList() {
       originalTask: t,
     }))
 
-  const allTasks = [...personalItems, ...farmItems]
-
-  // Filter tasks
-  const activeTasks = allTasks.filter(t => t.status !== 'dropped')
-  const filteredTasks = activeTasks.filter(t => {
-    if (filter === 'done') return t.status === 'completed'
-    if (filter === 'today') return t.scheduled_date === todayStr && t.status !== 'completed'
-    if (filter === 'week') return t.scheduled_date && isThisWeek(parseISO(t.scheduled_date), { weekStartsOn: 1 }) && t.status !== 'completed'
-    // 'all' — show pending/in_progress first, completed at bottom
-    return true
-  })
-
-  // Sort: overdue first, then by priority, then by date
+  // Sort helper
   const priorityOrder: Record<string, number> = { critical: 0, high: 1, normal: 2, low: 3 }
-  const sorted = [...filteredTasks].sort((a, b) => {
-    // Completed always at bottom
+  const sortItems = (items: UnifiedTask[]) => [...items].sort((a, b) => {
     if (a.status === 'completed' && b.status !== 'completed') return 1
     if (b.status === 'completed' && a.status !== 'completed') return -1
-    // Priority
     const pa = priorityOrder[a.priority] ?? 2
     const pb = priorityOrder[b.priority] ?? 2
     if (pa !== pb) return pa - pb
-    // Date
     const da = a.scheduled_date || '9999'
     const db = b.scheduled_date || '9999'
     return da.localeCompare(db)
   })
 
-  const pendingCount = activeTasks.filter(t => t.status !== 'completed').length
-  const todayCount = activeTasks.filter(t => t.scheduled_date === todayStr && t.status !== 'completed').length
-  const doneCount = activeTasks.filter(t => t.status === 'completed').length
+  // Personal — filter by tab
+  const activePersonal = personalItems.filter(t => t.status !== 'dropped')
+  const filteredPersonal = activePersonal.filter(t => {
+    if (filter === 'done') return t.status === 'completed'
+    if (filter === 'today') return t.scheduled_date === todayStr && t.status !== 'completed'
+    if (filter === 'week') return t.scheduled_date && isThisWeek(parseISO(t.scheduled_date), { weekStartsOn: 1 }) && t.status !== 'completed'
+    return true
+  })
+  const sortedPersonal = sortItems(filteredPersonal)
+
+  // Farm — always show pending (no done tab for farm)
+  const activeFarm = farmItems.filter(t => t.status !== 'completed' && t.status !== 'dropped')
+  // group by project name
+  const farmByProject: Record<string, UnifiedTask[]> = {}
+  activeFarm.forEach(t => {
+    const key = t.projectName || 'Farm'
+    if (!farmByProject[key]) farmByProject[key] = []
+    farmByProject[key].push(t)
+  })
+
+  const pendingCount = activePersonal.filter(t => t.status !== 'completed').length
+  const todayCount = activePersonal.filter(t => t.scheduled_date === todayStr && t.status !== 'completed').length
+  const doneCount = activePersonal.filter(t => t.status === 'completed').length
 
   const filters: { key: Filter; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: pendingCount },
     { key: 'today', label: 'Today', count: todayCount },
-    { key: 'week', label: 'This Week', count: activeTasks.filter(t => t.scheduled_date && isThisWeek(parseISO(t.scheduled_date), { weekStartsOn: 1 }) && t.status !== 'completed').length },
+    { key: 'week', label: 'This Week', count: activePersonal.filter(t => t.scheduled_date && isThisWeek(parseISO(t.scheduled_date), { weekStartsOn: 1 }) && t.status !== 'completed').length },
     { key: 'done', label: 'Done', count: doneCount },
   ]
+
+  const SECTION_LABEL: React.CSSProperties = {
+    fontFamily: 'var(--font-body)',
+    fontSize: '0.62rem',
+    fontWeight: 400,
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase',
+    color: 'var(--ink-muted)',
+    marginBottom: '14px',
+  }
 
   if (isLoading) {
     return (
@@ -423,91 +438,113 @@ export default function TodoList() {
   }
 
   return (
-    <div>
-      {/* Quick add */}
-      <QuickAdd onAdd={handleAdd} />
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'start' }}>
 
-      {/* Filter tabs */}
-      <div style={{
-        display: 'flex',
-        gap: '6px',
-        marginBottom: '24px',
-        padding: '3px',
-        background: 'rgba(107, 124, 92, 0.04)',
-        borderRadius: 'var(--radius-sm)',
-      }}>
-        {filters.map(f => (
-          <button
-            key={f.key}
-            onClick={() => setFilter(f.key)}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              borderRadius: 'calc(var(--radius-sm) - 3px)',
-              border: 'none',
-              cursor: 'pointer',
-              fontFamily: 'var(--font-body)',
-              fontSize: '0.65rem',
-              fontWeight: filter === f.key ? 500 : 300,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: filter === f.key ? 'var(--olive)' : 'var(--ink-muted)',
-              background: filter === f.key ? 'rgba(255, 252, 245, 0.9)' : 'transparent',
-              boxShadow: filter === f.key ? '0 1px 4px rgba(107, 124, 92, 0.08)' : 'none',
-              transition: 'all 200ms ease',
-            }}
-          >
-            {f.label}
-            {f.count > 0 && (
-              <span style={{
-                marginLeft: '6px',
-                fontSize: '0.58rem',
-                opacity: 0.6,
-              }}>
-                {f.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
+      {/* ── Left: Personal ── */}
+      <div>
+        <p style={{ ...SECTION_LABEL, color: 'var(--foundation)', borderLeft: '3px solid #5c7a5c', paddingLeft: '10px' }}>Personal</p>
 
-      {/* Task list */}
-      {sorted.length === 0 ? (
+        {/* Quick add */}
+        <QuickAdd onAdd={handleAdd} />
+
+        {/* Filter tabs */}
         <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
+          display: 'flex',
+          gap: '4px',
+          marginBottom: '16px',
+          padding: '3px',
+          background: 'rgba(107, 124, 92, 0.04)',
+          borderRadius: 'var(--radius-sm)',
         }}>
-          <p style={{
-            ...DISPLAY,
-            fontSize: '1.2rem',
-            color: 'var(--ink)',
-            marginBottom: '8px',
-          }}>
-            {filter === 'done' ? 'Nothing completed yet.' : 'Nothing here yet.'}
-          </p>
-          <p style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '0.8rem',
-            fontWeight: 300,
-            color: 'var(--ink-muted)',
-          }}>
-            {filter === 'done' ? 'Get to work.' : 'Type above or tell Tracey.'}
-          </p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {sorted.map(item => (
-            <TaskItem
-              key={item.id}
-              task={item}
-              onToggle={() => item.source === 'personal' && handleToggle(item.originalTask)}
-              onDelete={() => item.source === 'personal' && handleDelete(item.originalTask.id)}
-              onUpdate={(updates) => item.source === 'personal' && handleUpdate(item.originalTask.id, updates)}
-              readOnly={item.source === 'farm'}
-            />
+          {filters.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              style={{
+                flex: 1,
+                padding: '6px 8px',
+                borderRadius: 'calc(var(--radius-sm) - 3px)',
+                border: 'none',
+                cursor: 'pointer',
+                fontFamily: 'var(--font-body)',
+                fontSize: '0.6rem',
+                fontWeight: filter === f.key ? 500 : 300,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: filter === f.key ? 'var(--olive)' : 'var(--ink-muted)',
+                background: filter === f.key ? 'rgba(255, 252, 245, 0.9)' : 'transparent',
+                boxShadow: filter === f.key ? '0 1px 4px rgba(107, 124, 92, 0.08)' : 'none',
+                transition: 'all 200ms ease',
+              }}
+            >
+              {f.label}
+              {f.count > 0 && (
+                <span style={{ marginLeft: '4px', fontSize: '0.55rem', opacity: 0.6 }}>{f.count}</span>
+              )}
+            </button>
           ))}
         </div>
-      )}
+
+        {/* Personal task list */}
+        {sortedPersonal.length === 0 ? (
+          <div style={{ padding: '40px 0', textAlign: 'center' }}>
+            <p style={{ ...DISPLAY, fontSize: '1rem', color: 'var(--ink-muted)', fontStyle: 'italic' }}>
+              {filter === 'done' ? 'Nothing done yet.' : 'Clear. Good.'}
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {sortedPersonal.map(item => (
+              <TaskItem
+                key={item.id}
+                task={item}
+                onToggle={() => handleToggle(item.originalTask)}
+                onDelete={() => handleDelete(item.originalTask.id)}
+                onUpdate={(updates) => handleUpdate(item.originalTask.id, updates)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── Right: Farm ── */}
+      <div>
+        <p style={{ ...SECTION_LABEL, color: 'var(--clay)', borderLeft: '3px solid var(--clay)', paddingLeft: '10px' }}>Farm</p>
+
+        {Object.keys(farmByProject).length === 0 ? (
+          <div style={{ padding: '40px 0', textAlign: 'center' }}>
+            <p style={{ ...DISPLAY, fontSize: '1rem', color: 'var(--ink-muted)', fontStyle: 'italic' }}>No farm tasks pending.</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {Object.entries(farmByProject).map(([projectName, items]) => (
+              <div key={projectName}>
+                <p style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '0.68rem',
+                  fontWeight: 400,
+                  letterSpacing: '0.08em',
+                  color: 'var(--clay)',
+                  marginBottom: '8px',
+                }}>🌿 {projectName}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {sortItems(items).map(item => (
+                    <TaskItem
+                      key={item.id}
+                      task={item}
+                      onToggle={() => {}}
+                      onDelete={() => {}}
+                      onUpdate={() => {}}
+                      readOnly
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }
