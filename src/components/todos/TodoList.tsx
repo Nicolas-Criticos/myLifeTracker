@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { format, parseISO, isToday, isTomorrow, isPast, isThisWeek } from 'date-fns'
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useProjects } from '../../lib/queries'
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useProjects, useFarmTasks } from '../../lib/queries'
 import { nowInSAST } from '../../lib/utils'
 import type { Task, TaskStatus, TaskPriority } from '../../lib/supabase'
 
@@ -30,6 +30,20 @@ const PRIORITY_COLORS: Record<string, string> = {
   high: '#8a6a3a',
   normal: 'rgba(44, 42, 37, 0.25)',
   low: 'rgba(44, 42, 37, 0.12)',
+}
+
+// ── Unified Task type ─────────────────────────────────────────────────────────
+
+interface UnifiedTask {
+  id: string
+  title: string
+  status: string
+  priority: string
+  scheduled_date: string | null
+  completed_at: string | null
+  source: 'personal' | 'farm'
+  projectName?: string
+  originalTask: any
 }
 
 // ── Quick Add ─────────────────────────────────────────────────────────────────
@@ -88,16 +102,17 @@ function QuickAdd({ onAdd }: { onAdd: (title: string) => void }) {
 
 // ── Task Item ─────────────────────────────────────────────────────────────────
 
-function TaskItem({ task, onToggle, onDelete, onUpdate }: {
-  task: Task
+function TaskItem({ task, onToggle, onDelete, onUpdate, readOnly }: {
+  task: UnifiedTask
   onToggle: () => void
   onDelete: () => void
   onUpdate: (updates: Partial<Task>) => void
+  readOnly?: boolean
 }) {
   const [editing, setEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(task.title)
   const [editDate, setEditDate] = useState(task.scheduled_date || '')
-  const [editPriority, setEditPriority] = useState<TaskPriority>(task.priority)
+  const [editPriority, setEditPriority] = useState<TaskPriority>(task.priority as TaskPriority)
 
   const isDone = task.status === 'completed'
   const isDropped = task.status === 'dropped'
@@ -183,19 +198,20 @@ function TaskItem({ task, onToggle, onDelete, onUpdate }: {
     }}>
       {/* Checkbox */}
       <button
-        onClick={onToggle}
+        onClick={readOnly ? undefined : onToggle}
         style={{
           width: '20px',
           height: '20px',
           borderRadius: '6px',
-          border: `2px solid ${isDone ? 'var(--olive)' : 'rgba(44, 42, 37, 0.2)'}`,
+          border: `2px solid ${isDone ? 'var(--olive)' : readOnly ? 'rgba(44, 42, 37, 0.12)' : 'rgba(44, 42, 37, 0.2)'}`,
           background: isDone ? 'var(--olive)' : 'transparent',
-          cursor: 'pointer',
+          cursor: readOnly ? 'default' : 'pointer',
           flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'all 200ms ease',
+          opacity: readOnly ? 0.5 : 1,
         }}
       >
         {isDone && (
@@ -216,8 +232,8 @@ function TaskItem({ task, onToggle, onDelete, onUpdate }: {
 
       {/* Content */}
       <div
-        style={{ flex: 1, cursor: 'pointer' }}
-        onClick={() => setEditing(true)}
+        style={{ flex: 1, cursor: readOnly ? 'default' : 'pointer' }}
+        onClick={readOnly ? undefined : () => setEditing(true)}
       >
         <p style={{
           fontFamily: 'var(--font-body)',
@@ -241,26 +257,46 @@ function TaskItem({ task, onToggle, onDelete, onUpdate }: {
             {isOverdue ? '⚠ ' : ''}{dateLabel}
           </p>
         )}
+        {task.source === 'farm' && task.projectName && (
+          <span style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.58rem',
+            fontWeight: 400,
+            letterSpacing: '0.06em',
+            color: 'var(--clay)',
+            background: 'rgba(195, 162, 97, 0.1)',
+            padding: '1px 7px',
+            borderRadius: 'var(--radius-full)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '3px',
+            marginTop: '2px',
+          }}>
+            🌿 {task.projectName}
+          </span>
+        )}
       </div>
 
-      {/* Delete */}
-      <button
-        onClick={onDelete}
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          fontSize: '0.8rem',
-          color: 'var(--ink-muted)',
-          opacity: 0.4,
-          padding: '4px',
-          transition: 'opacity 200ms',
-        }}
-        onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-        onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
-      >
-        ×
-      </button>
+      {/* Delete — hidden for read-only farm tasks */}
+      {!readOnly && (
+        <button
+          onClick={onDelete}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '0.8rem',
+            color: 'var(--ink-muted)',
+            opacity: 0.4,
+            padding: '4px',
+            transition: 'opacity 200ms',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+          onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
+        >
+          ×
+        </button>
+      )}
     </div>
   )
 }
@@ -273,6 +309,7 @@ type Filter = 'all' | 'today' | 'week' | 'done'
 
 export default function TodoList() {
   const { data: tasks = [], isLoading } = useTasks()
+  const { data: farmTasks = [] } = useFarmTasks()
   useProjects() // loaded for future task-project linking
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
@@ -311,8 +348,37 @@ export default function TodoList() {
     updateTask.mutate({ id, ...updates })
   }
 
+  // Normalize personal tasks
+  const personalItems: UnifiedTask[] = tasks.map(t => ({
+    id: t.id,
+    title: t.title,
+    status: t.status,
+    priority: t.priority,
+    scheduled_date: t.scheduled_date,
+    completed_at: t.completed_at,
+    source: 'personal' as const,
+    originalTask: t,
+  }))
+
+  // Normalize farm tasks (exclude completed)
+  const farmItems: UnifiedTask[] = farmTasks
+    .filter(t => t.status !== 'Completed')
+    .map(t => ({
+      id: `farm-${t.id}`,
+      title: t.name,
+      status: t.status === 'Completed' ? 'completed' : t.status === 'Running' ? 'in_progress' : 'pending',
+      priority: 'normal',
+      scheduled_date: t.start_date || null,
+      completed_at: null,
+      source: 'farm' as const,
+      projectName: t.projects?.title || 'Farm',
+      originalTask: t,
+    }))
+
+  const allTasks = [...personalItems, ...farmItems]
+
   // Filter tasks
-  const activeTasks = tasks.filter(t => t.status !== 'dropped')
+  const activeTasks = allTasks.filter(t => t.status !== 'dropped')
   const filteredTasks = activeTasks.filter(t => {
     if (filter === 'done') return t.status === 'completed'
     if (filter === 'today') return t.scheduled_date === todayStr && t.status !== 'completed'
@@ -430,13 +496,14 @@ export default function TodoList() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {sorted.map(task => (
+          {sorted.map(item => (
             <TaskItem
-              key={task.id}
-              task={task}
-              onToggle={() => handleToggle(task)}
-              onDelete={() => handleDelete(task.id)}
-              onUpdate={(updates) => handleUpdate(task.id, updates)}
+              key={item.id}
+              task={item}
+              onToggle={() => item.source === 'personal' && handleToggle(item.originalTask)}
+              onDelete={() => item.source === 'personal' && handleDelete(item.originalTask.id)}
+              onUpdate={(updates) => item.source === 'personal' && handleUpdate(item.originalTask.id, updates)}
+              readOnly={item.source === 'farm'}
             />
           ))}
         </div>

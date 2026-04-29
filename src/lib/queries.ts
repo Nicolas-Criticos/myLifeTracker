@@ -455,6 +455,21 @@ export function useCommunityProjectTasks(projectId: string) {
   })
 }
 
+export function useFarmTasks() {
+  return useQuery({
+    queryKey: ['farm_tasks'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('project_tasks')
+        .select('id, name, status, project, created_at, start_date, end_date, description, projects!inner(title, realm)')
+        .eq('projects.realm', 'vrischgewagt')
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data as (CommunityTask & { projects: { title: string; realm: string } })[]
+    },
+  })
+}
+
 // ── DREAMS ────────────────────────────────────────────────────────────────────
 
 export function useDreams(limit = 30) {
