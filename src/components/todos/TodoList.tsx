@@ -362,9 +362,8 @@ export default function TodoList() {
     originalTask: t,
   }))
 
-  // Normalize farm tasks (exclude completed)
+  // Normalize farm tasks
   const farmItems: UnifiedTask[] = farmTasks
-    .filter(t => t.status !== 'Completed')
     .map(t => ({
       id: `farm-${t.id}`,
       title: t.name,
