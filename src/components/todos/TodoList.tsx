@@ -390,21 +390,29 @@ export default function TodoList() {
     return da.localeCompare(db)
   })
 
-  // Personal — filter by tab
-  const activePersonal = personalItems.filter(t => t.status !== 'dropped')
+  // Personal — exclude recurring, filter by tab
+  const activePersonal = personalItems.filter(t =>
+    t.status !== 'dropped' && !(t.originalTask as Task).recurrence
+  )
   const filteredPersonal = activePersonal.filter(t => {
     if (filter === 'done') return t.status === 'completed'
     if (filter === 'today') return t.scheduled_date === todayStr && t.status !== 'completed'
-    if (filter === 'week') return t.scheduled_date && isThisWeek(parseISO(t.scheduled_date), { weekStartsOn: 1 }) && t.status !== 'completed'
+    if (filter === 'week') return t.scheduled_date != null && isThisWeek(parseISO(t.scheduled_date), { weekStartsOn: 1 }) && t.status !== 'completed'
     return true
   })
   const sortedPersonal = sortItems(filteredPersonal)
 
-  // Farm — always show pending (no done tab for farm)
-  const activeFarm = farmItems.filter(t => t.status !== 'completed' && t.status !== 'dropped')
-  // group by project name
+  // Farm — apply same tab filter, group by project name
+  const activeFarm = farmItems.filter(t => t.status !== 'dropped')
+  const filteredFarm = activeFarm.filter(t => {
+    if (filter === 'done') return t.status === 'completed'
+    if (filter === 'today') return t.scheduled_date === todayStr && t.status !== 'completed'
+    if (filter === 'week') return t.scheduled_date != null && isThisWeek(parseISO(t.scheduled_date), { weekStartsOn: 1 }) && t.status !== 'completed'
+    // 'all' — show pending only (completed drop off)
+    return t.status !== 'completed'
+  })
   const farmByProject: Record<string, UnifiedTask[]> = {}
-  activeFarm.forEach(t => {
+  filteredFarm.forEach(t => {
     const key = t.projectName || 'Farm'
     if (!farmByProject[key]) farmByProject[key] = []
     farmByProject[key].push(t)
@@ -417,7 +425,7 @@ export default function TodoList() {
   const filters: { key: Filter; label: string; count: number }[] = [
     { key: 'all', label: 'All', count: pendingCount },
     { key: 'today', label: 'Today', count: todayCount },
-    { key: 'week', label: 'This Week', count: activePersonal.filter(t => t.scheduled_date && isThisWeek(parseISO(t.scheduled_date), { weekStartsOn: 1 }) && t.status !== 'completed').length },
+    { key: 'week', label: 'This Week', count: activePersonal.filter(t => t.scheduled_date != null && isThisWeek(parseISO(t.scheduled_date), { weekStartsOn: 1 }) && t.status !== 'completed').length },
     { key: 'done', label: 'Done', count: doneCount },
   ]
 
