@@ -89,6 +89,7 @@ export default function ProjectDetail({ project, tasks }: ProjectDetailProps) {
       scheduled_date: newDate || null,
       completed_at: null,
       dropped_reason: null,
+      recurrence: newRecurrence || null,
     })
     setNewTitle('')
     setNewPriority('normal')
