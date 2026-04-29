@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { format, parseISO, isToday, isTomorrow, isPast, isThisWeek } from 'date-fns'
-import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useProjects, useFarmTasks } from '../../lib/queries'
+import { useTasks, useCreateTask, useUpdateTask, useDeleteTask, useProjects, useFarmTasks, useUpdateFarmTask, useDeleteFarmTask } from '../../lib/queries'
 import { nowInSAST } from '../../lib/utils'
 import type { Task, TaskStatus, TaskPriority } from '../../lib/supabase'
 
@@ -310,10 +310,12 @@ type Filter = 'all' | 'today' | 'week' | 'done'
 export default function TodoList() {
   const { data: tasks = [], isLoading } = useTasks()
   const { data: farmTasks = [] } = useFarmTasks()
-  useProjects() // loaded for future task-project linking
+  useProjects()
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
+  const updateFarmTask = useUpdateFarmTask()
+  const deleteFarmTask = useDeleteFarmTask()
   const [filter, setFilter] = useState<Filter>('all')
   const now = nowInSAST()
   const todayStr = format(now, 'yyyy-MM-dd')
@@ -535,10 +537,13 @@ export default function TodoList() {
                     <TaskItem
                       key={item.id}
                       task={item}
-                      onToggle={() => {}}
-                      onDelete={() => {}}
+                      onToggle={() => {
+                        const orig = item.originalTask
+                        const newStatus = orig.status === 'Completed' ? 'Pending' : 'Completed'
+                        updateFarmTask.mutate({ id: orig.id, status: newStatus })
+                      }}
+                      onDelete={() => deleteFarmTask.mutate(item.originalTask.id)}
                       onUpdate={() => {}}
-                      readOnly
                     />
                   ))}
                 </div>

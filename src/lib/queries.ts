@@ -470,6 +470,38 @@ export function useFarmTasks() {
   })
 }
 
+export function useUpdateFarmTask() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const { error } = await supabase
+        .from('project_tasks')
+        .update({ status })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['farm_tasks'] })
+    },
+  })
+}
+
+export function useDeleteFarmTask() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase
+        .from('project_tasks')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['farm_tasks'] })
+    },
+  })
+}
+
 // ── DREAMS ────────────────────────────────────────────────────────────────────
 
 export function useDreams(limit = 30) {
