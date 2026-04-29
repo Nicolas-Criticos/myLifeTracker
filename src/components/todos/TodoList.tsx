@@ -438,52 +438,55 @@ export default function TodoList() {
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'start' }}>
+    <div>
+
+      {/* Quick add — full width above both columns */}
+      <QuickAdd onAdd={handleAdd} />
+
+      {/* Filter tabs — full width */}
+      <div style={{
+        display: 'flex',
+        gap: '4px',
+        marginBottom: '28px',
+        padding: '3px',
+        background: 'rgba(107, 124, 92, 0.04)',
+        borderRadius: 'var(--radius-sm)',
+      }}>
+        {filters.map(f => (
+          <button
+            key={f.key}
+            onClick={() => setFilter(f.key)}
+            style={{
+              flex: 1,
+              padding: '8px 12px',
+              borderRadius: 'calc(var(--radius-sm) - 3px)',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-body)',
+              fontSize: '0.65rem',
+              fontWeight: filter === f.key ? 500 : 300,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: filter === f.key ? 'var(--olive)' : 'var(--ink-muted)',
+              background: filter === f.key ? 'rgba(255, 252, 245, 0.9)' : 'transparent',
+              boxShadow: filter === f.key ? '0 1px 4px rgba(107, 124, 92, 0.08)' : 'none',
+              transition: 'all 200ms ease',
+            }}
+          >
+            {f.label}
+            {f.count > 0 && (
+              <span style={{ marginLeft: '6px', fontSize: '0.58rem', opacity: 0.6 }}>{f.count}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Two-column grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', alignItems: 'start' }}>
 
       {/* ── Left: Personal ── */}
       <div>
         <p style={{ ...SECTION_LABEL, color: 'var(--foundation)', borderLeft: '3px solid #5c7a5c', paddingLeft: '10px' }}>Personal</p>
-
-        {/* Quick add */}
-        <QuickAdd onAdd={handleAdd} />
-
-        {/* Filter tabs */}
-        <div style={{
-          display: 'flex',
-          gap: '4px',
-          marginBottom: '16px',
-          padding: '3px',
-          background: 'rgba(107, 124, 92, 0.04)',
-          borderRadius: 'var(--radius-sm)',
-        }}>
-          {filters.map(f => (
-            <button
-              key={f.key}
-              onClick={() => setFilter(f.key)}
-              style={{
-                flex: 1,
-                padding: '6px 8px',
-                borderRadius: 'calc(var(--radius-sm) - 3px)',
-                border: 'none',
-                cursor: 'pointer',
-                fontFamily: 'var(--font-body)',
-                fontSize: '0.6rem',
-                fontWeight: filter === f.key ? 500 : 300,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: filter === f.key ? 'var(--olive)' : 'var(--ink-muted)',
-                background: filter === f.key ? 'rgba(255, 252, 245, 0.9)' : 'transparent',
-                boxShadow: filter === f.key ? '0 1px 4px rgba(107, 124, 92, 0.08)' : 'none',
-                transition: 'all 200ms ease',
-              }}
-            >
-              {f.label}
-              {f.count > 0 && (
-                <span style={{ marginLeft: '4px', fontSize: '0.55rem', opacity: 0.6 }}>{f.count}</span>
-              )}
-            </button>
-          ))}
-        </div>
 
         {/* Personal task list */}
         {sortedPersonal.length === 0 ? (
@@ -545,6 +548,7 @@ export default function TodoList() {
         )}
       </div>
 
+      </div> {/* end two-column grid */}
     </div>
   )
 }
