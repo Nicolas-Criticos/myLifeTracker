@@ -291,6 +291,7 @@ export default function TodoList() {
       completed_at: null,
       dropped_reason: null,
       project_id: null,
+      recurrence: null,
     })
   }
 

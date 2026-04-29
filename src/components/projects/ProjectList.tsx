@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { categoryAccent } from '../../lib/utils'
 import { useCreateTask, useUpdateTask } from '../../lib/queries'
-import type { Category, Project, Task, TaskPriority, TaskStatus } from '../../lib/supabase'
+import type { Category, Project, Task, TaskPriority, TaskStatus, TaskRecurrence } from '../../lib/supabase'
 
 interface ProjectListProps {
   projects: Project[]
@@ -43,6 +43,7 @@ function InlineTaskManager({ projectId, tasks }: { projectId: string; tasks: Tas
   const [showAdd, setShowAdd] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newPriority, setNewPriority] = useState<TaskPriority>('normal')
+  const [newRecurrence, setNewRecurrence] = useState<TaskRecurrence | ''>('')
 
   const activeTasks = tasks.filter(t => t.status !== 'dropped')
   const priorityOrder: Record<string, number> = { critical: 0, high: 1, normal: 2, low: 3 }
@@ -63,10 +64,11 @@ function InlineTaskManager({ projectId, tasks }: { projectId: string; tasks: Tas
       scheduled_date: null,
       completed_at: null,
       dropped_reason: null,
-      recurrence: null,
+      recurrence: newRecurrence || null,
     })
     setNewTitle('')
     setNewPriority('normal')
+    setNewRecurrence('')
     setShowAdd(false)
   }
 
@@ -129,6 +131,16 @@ function InlineTaskManager({ projectId, tasks }: { projectId: string; tasks: Tas
             <option value="normal">Normal</option>
             <option value="high">High</option>
             <option value="critical">Critical</option>
+          </select>
+          <select
+            value={newRecurrence}
+            onChange={e => setNewRecurrence(e.target.value as TaskRecurrence | '')}
+            style={{ ...INPUT, flex: 0.9, cursor: 'pointer' }}
+            title="Repeat"
+          >
+            <option value="">No repeat</option>
+            <option value="daily">Every day</option>
+            <option value="weekdays">Every weekday</option>
           </select>
           <button
             onClick={handleAdd}
@@ -213,6 +225,24 @@ function InlineTaskManager({ projectId, tasks }: { projectId: string; tasks: Tas
                 }}>
                   {task.title}
                 </p>
+                {task.recurrence && (
+                  <span style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '0.58rem',
+                    fontWeight: 400,
+                    letterSpacing: '0.06em',
+                    color: 'var(--olive)',
+                    background: 'var(--olive-muted)',
+                    padding: '1px 7px',
+                    borderRadius: 'var(--radius-full)',
+                    flexShrink: 0,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                  }}>
+                    ↻ {task.recurrence === 'daily' ? 'Daily' : 'Weekdays'}
+                  </span>
+                )}
               </div>
             )
           })}
