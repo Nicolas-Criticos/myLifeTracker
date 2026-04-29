@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { format, parseISO } from 'date-fns'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -153,6 +154,47 @@ export default function Business() {
         <p style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: '0.82rem', color: 'var(--ink-muted)' }}>
           Last 30 days · Vrischgewagt
         </p>
+      </div>
+
+      {/* Invoices shortcut */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '36px' }}>
+        <Link
+          to="/invoices"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-full)',
+            padding: '11px 28px',
+            fontFamily: 'var(--font-body)',
+            fontSize: '0.68rem',
+            fontWeight: 400,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: 'var(--ink-muted)',
+            textDecoration: 'none',
+            transition: 'all 200ms',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLAnchorElement).style.color = 'var(--olive)'
+            ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--olive)'
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLAnchorElement).style.color = 'var(--ink-muted)'
+            ;(e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--border)'
+          }}
+        >
+          <svg width="14" height="14" fill="none" viewBox="0 0 14 14" style={{ opacity: 0.6 }}>
+            <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.2" />
+            <line x1="3.5" y1="4.5" x2="10.5" y2="4.5" stroke="currentColor" strokeWidth="1" />
+            <line x1="3.5" y1="7"   x2="10.5" y2="7"   stroke="currentColor" strokeWidth="1" />
+            <line x1="3.5" y1="9.5" x2="7.5"  y2="9.5" stroke="currentColor" strokeWidth="1" />
+          </svg>
+          Invoices
+        </Link>
       </div>
 
       {/* KPI cards */}

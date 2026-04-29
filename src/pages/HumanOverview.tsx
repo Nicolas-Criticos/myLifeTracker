@@ -82,7 +82,7 @@ const CHAKRAS: ChakraNode[] = [
     color: '#AA8800',
     top: 45,
     side: 'right',
-    pdf: '/docs/human-design.pdf',
+    pdf: '/docs/human-design-chart.jpg',
   },
   {
     id: 'sacral',

@@ -13,6 +13,8 @@ import Todos from './pages/Todos'
 import Dreams from './pages/Dreams'
 import Finances from './pages/Finances'
 import HumanOverview from './pages/HumanOverview'
+import Invoices from './pages/Invoices'
+import InvoiceDetail from './components/invoices/InvoiceDetail'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,6 +45,8 @@ export default function App() {
               <Route path="/dreams" element={<Dreams />} />
               <Route path="/finances" element={<Finances />} />
               <Route path="/human" element={<HumanOverview />} />
+              <Route path="/invoices" element={<Invoices />} />
+              <Route path="/invoices/:id" element={<InvoiceDetail />} />
             </Routes>
           </div>
         </div>
