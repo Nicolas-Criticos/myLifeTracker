@@ -350,17 +350,19 @@ export default function TodoList() {
     updateTask.mutate({ id, ...updates })
   }
 
-  // Normalize personal tasks
-  const personalItems: UnifiedTask[] = tasks.map(t => ({
-    id: t.id,
-    title: t.title,
-    status: t.status,
-    priority: t.priority,
-    scheduled_date: t.scheduled_date,
-    completed_at: t.completed_at,
-    source: 'personal' as const,
-    originalTask: t,
-  }))
+  // Normalize personal tasks — only standalone to-dos (no project)
+  const personalItems: UnifiedTask[] = tasks
+    .filter(t => t.project_id == null)
+    .map(t => ({
+      id: t.id,
+      title: t.title,
+      status: t.status,
+      priority: t.priority,
+      scheduled_date: t.scheduled_date,
+      completed_at: t.completed_at,
+      source: 'personal' as const,
+      originalTask: t,
+    }))
 
   // Normalize farm tasks
   const farmItems: UnifiedTask[] = farmTasks
@@ -397,7 +399,7 @@ export default function TodoList() {
     if (filter === 'done') return t.status === 'completed'
     if (filter === 'today') return t.scheduled_date === todayStr && t.status !== 'completed'
     if (filter === 'week') return t.scheduled_date != null && isThisWeek(parseISO(t.scheduled_date), { weekStartsOn: 1 }) && t.status !== 'completed'
-    return true
+    return t.status !== 'completed'
   })
   const sortedPersonal = sortItems(filteredPersonal)
 

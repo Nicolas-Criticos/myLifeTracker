@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { supabase } from './supabase'
+import { businessSupabase } from './businessSupabase'
 import type {
   Project, Task, DailyCheckin, DailyLog, WeeklyReview, Pattern,
-  Product, Expense, Sale, CommunityProject, CommunityTask, Dream,
+  Product, Expense, Sale, CostComponent, CommunityProject, CommunityTask, Dream,
   FinAccount, FinMonthlyEntry,
 } from './supabase'
 import { getWeekRange, mondayOfCurrentWeek } from './utils'
@@ -321,9 +322,9 @@ export function useAcknowledgePattern() {
 
 export function useProducts() {
   return useQuery({
-    queryKey: ['products'],
+    queryKey: ['business', 'products'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await businessSupabase
         .from('products')
         .select('*')
         .eq('active', true)
@@ -334,16 +335,42 @@ export function useProducts() {
   })
 }
 
-export function useSalesData(_days = 30) {
-  return { data: [] as Sale[], isLoading: false }
+export function useBusinessCostComponents() {
+  return useQuery({
+    queryKey: ['business', 'cost_components'],
+    queryFn: async () => {
+      const { data, error } = await businessSupabase
+        .from('cost_components')
+        .select('*')
+        .eq('active', true)
+      if (error) throw error
+      return data as CostComponent[]
+    },
+  })
+}
+
+export function useSalesData(days = 30) {
+  return useQuery({
+    queryKey: ['business', 'sales', days],
+    queryFn: async () => {
+      const since = format(new Date(Date.now() - days * 86400000), 'yyyy-MM-dd')
+      const { data, error } = await businessSupabase
+        .from('sales')
+        .select('*')
+        .gte('date', since)
+        .order('date', { ascending: false })
+      if (error) throw error
+      return data as Sale[]
+    },
+  })
 }
 
 export function useExpenses(days = 30) {
   return useQuery({
-    queryKey: ['expenses', days],
+    queryKey: ['business', 'expenses', days],
     queryFn: async () => {
       const since = format(new Date(Date.now() - days * 86400000), 'yyyy-MM-dd')
-      const { data, error } = await supabase
+      const { data, error } = await businessSupabase
         .from('expenses')
         .select('*')
         .gte('date', since)
@@ -355,18 +382,48 @@ export function useExpenses(days = 30) {
 }
 
 export function useThisWeekSales() {
-  return { data: [] as Sale[], isLoading: false }
+  const { start, end } = getWeekRange()
+  const startStr = format(start, 'yyyy-MM-dd')
+  const endStr = format(end, 'yyyy-MM-dd')
+  return useQuery({
+    queryKey: ['business', 'sales', 'week', startStr],
+    queryFn: async () => {
+      const { data, error } = await businessSupabase
+        .from('sales')
+        .select('*')
+        .gte('date', startStr)
+        .lte('date', endStr)
+        .order('date', { ascending: true })
+      if (error) throw error
+      return data as Sale[]
+    },
+  })
 }
 
 export function usePreviousWeekSales() {
-  return { data: [] as Sale[], isLoading: false }
+  const { start, end } = getWeekRange(new Date(Date.now() - 7 * 86400000))
+  const startStr = format(start, 'yyyy-MM-dd')
+  const endStr = format(end, 'yyyy-MM-dd')
+  return useQuery({
+    queryKey: ['business', 'sales', 'prev_week', startStr],
+    queryFn: async () => {
+      const { data, error } = await businessSupabase
+        .from('sales')
+        .select('*')
+        .gte('date', startStr)
+        .lte('date', endStr)
+        .order('date', { ascending: true })
+      if (error) throw error
+      return data as Sale[]
+    },
+  })
 }
 
 export function useCreateSale() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (sale: Omit<Sale, 'id'>) => {
-      const { data, error } = await supabase
+      const { data, error } = await businessSupabase
         .from('sales')
         .insert(sale)
         .select()
@@ -375,7 +432,25 @@ export function useCreateSale() {
       return data as Sale
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['sales'] })
+      qc.invalidateQueries({ queryKey: ['business', 'sales'] })
+    },
+  })
+}
+
+export function useCreateExpense() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (expense: Omit<Expense, 'id'>) => {
+      const { data, error } = await businessSupabase
+        .from('expenses')
+        .insert(expense)
+        .select()
+        .single()
+      if (error) throw error
+      return data as Expense
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['business', 'expenses'] })
     },
   })
 }
@@ -465,7 +540,7 @@ export function useFarmTasks() {
         .eq('projects.realm', 'vrischgewagt')
         .order('created_at', { ascending: false })
       if (error) throw error
-      return data as (CommunityTask & { projects: { title: string; realm: string } })[]
+      return data as unknown as (CommunityTask & { projects: { title: string; realm: string } })[]
     },
   })
 }

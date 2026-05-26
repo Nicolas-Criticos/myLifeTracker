@@ -11,7 +11,6 @@ const nav = [
   { to: '/reviews', label: 'Reviews' },
   { to: '/business', label: 'Business' },
   { to: '/finances', label: 'Finances' },
-  { to: '/insights', label: 'Insights' },
   { to: '/olive-rehab', label: 'Olive Rehab' },
 ]
 

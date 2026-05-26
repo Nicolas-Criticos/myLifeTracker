@@ -5,7 +5,6 @@ import Dashboard from './pages/Dashboard'
 import Projects from './pages/Projects'
 import ProjectDetailPage from './pages/ProjectDetail'
 import Reviews from './pages/Reviews'
-import Insights from './pages/Insights'
 import Business from './pages/Business'
 import Journal from './pages/Journal'
 import OliveRehab from './pages/OliveRehab'
@@ -37,7 +36,6 @@ export default function App() {
               <Route path="/projects" element={<Projects />} />
               <Route path="/projects/:id" element={<ProjectDetailPage />} />
               <Route path="/reviews" element={<Reviews />} />
-              <Route path="/insights" element={<Insights />} />
               <Route path="/business" element={<Business />} />
               <Route path="/journal" element={<Journal />} />
               <Route path="/olive-rehab" element={<OliveRehab />} />

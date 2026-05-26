@@ -36,10 +36,10 @@ export default function WeeklyDashboard() {
   const now = nowInSAST()
   const { start, end } = getWeekRange(now)
 
-  const completedTasks = tasks.filter(t => t.status === 'completed')
-  const activeTasks = tasks.filter(t => t.status !== 'dropped')
-  const completionRate = activeTasks.length > 0
-    ? Math.round((completedTasks.length / activeTasks.length) * 100)
+  const completedThisWeek = thisWeekTasks.filter(t => t.status === 'completed').length
+  const totalThisWeek = thisWeekTasks.filter(t => t.status !== 'dropped').length
+  const completionRate = totalThisWeek > 0
+    ? Math.round((completedThisWeek / totalThisWeek) * 100)
     : 0
 
   const avgMomentum = weekLogs.length > 0
