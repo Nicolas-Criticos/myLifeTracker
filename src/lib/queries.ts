@@ -320,7 +320,7 @@ export function useAcknowledgePattern() {
 
 // ── BUSINESS / OLIVE BRAIN ────────────────────────────────────────────────────
 
-export function useProducts() {
+export function useBusinessProducts() {
   return useQuery({
     queryKey: ['business', 'products'],
     queryFn: async () => {
@@ -328,23 +328,96 @@ export function useProducts() {
         .from('products')
         .select('*')
         .eq('active', true)
-        .order('name', { ascending: true })
+        .order('created_at', { ascending: false })
       if (error) throw error
       return data as Product[]
     },
   })
 }
 
-export function useBusinessCostComponents() {
+export function useBusinessCostComponents(productId?: string) {
   return useQuery({
-    queryKey: ['business', 'cost_components'],
+    queryKey: ['business', 'cost_components', productId ?? 'all'],
     queryFn: async () => {
-      const { data, error } = await businessSupabase
+      let q = businessSupabase
         .from('cost_components')
         .select('*')
         .eq('active', true)
+      if (productId) q = q.eq('product_id', productId)
+      const { data, error } = await q
       if (error) throw error
       return data as CostComponent[]
+    },
+  })
+}
+
+export function useCreateProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (product: Omit<Product, 'id' | 'created_at'>) => {
+      const { data, error } = await businessSupabase
+        .from('products')
+        .insert(product)
+        .select()
+        .single()
+      if (error) throw error
+      return data as Product
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['business', 'products'] })
+    },
+  })
+}
+
+export function useUpdateProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Product> & { id: string }) => {
+      const { data, error } = await businessSupabase
+        .from('products')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data as Product
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['business', 'products'] })
+    },
+  })
+}
+
+export function useCreateCostComponent() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (component: Omit<CostComponent, 'id'>) => {
+      const { data, error } = await businessSupabase
+        .from('cost_components')
+        .insert(component)
+        .select()
+        .single()
+      if (error) throw error
+      return data as CostComponent
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['business', 'cost_components'] })
+    },
+  })
+}
+
+export function useDeleteCostComponentsForProduct() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (productId: string) => {
+      const { error } = await businessSupabase
+        .from('cost_components')
+        .delete()
+        .eq('product_id', productId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['business', 'cost_components'] })
     },
   })
 }
@@ -356,11 +429,11 @@ export function useSalesData(days = 30) {
       const since = format(new Date(Date.now() - days * 86400000), 'yyyy-MM-dd')
       const { data, error } = await businessSupabase
         .from('sales')
-        .select('*')
+        .select('*, products(name)')
         .gte('date', since)
         .order('date', { ascending: false })
       if (error) throw error
-      return data as Sale[]
+      return data as (Sale & { products: { name: string } | null })[]
     },
   })
 }

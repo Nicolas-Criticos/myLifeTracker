@@ -107,6 +107,9 @@ export interface Product {
   sku: string | null
   sell_price: number
   active: boolean
+  business: string | null
+  description: string | null
+  unit: string | null
   created_at: string
 }
 
