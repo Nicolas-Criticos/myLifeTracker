@@ -75,6 +75,36 @@ export function useTasks(projectId?: string) {
   })
 }
 
+export function useHighPriorityTasks() {
+  return useQuery({
+    queryKey: ['tasks', 'high-priority'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ops_tasks')
+        .select('*, ops_projects(name, category)')
+        .in('priority', ['critical', 'high'])
+        .not('status', 'in', '(completed,dropped)')
+        .order('priority', { ascending: true })
+      if (error) throw error
+      return data as (Task & { ops_projects: { name: string; category: string } | null })[]
+    },
+  })
+}
+
+export function useAllTasksWithProjects() {
+  return useQuery({
+    queryKey: ['tasks', 'all-with-projects'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ops_tasks')
+        .select('*, ops_projects(id, name, category)')
+        .order('priority', { ascending: true })
+      if (error) throw error
+      return data as (Task & { ops_projects: { id: string; name: string; category: string } | null })[]
+    },
+  })
+}
+
 export function useThisWeekTasks() {
   const { start, end } = getWeekRange()
   const startStr = format(start, 'yyyy-MM-dd')

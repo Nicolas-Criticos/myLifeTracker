@@ -61,6 +61,8 @@ export default function TaskList({ projectId, tasks }: TaskListProps) {
       completed_at: null,
       dropped_reason: null,
       recurrence: null,
+      reminder_at: null,
+      todo_id: null,
     })
     setNewTitle('')
     setNewPriority('normal')

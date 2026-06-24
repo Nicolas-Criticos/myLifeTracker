@@ -331,6 +331,8 @@ export default function TodoList() {
       dropped_reason: null,
       project_id: null,
       recurrence: null,
+      reminder_at: null,
+      todo_id: null,
     })
   }
 

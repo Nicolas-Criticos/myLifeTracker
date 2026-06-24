@@ -90,6 +90,8 @@ export default function ProjectDetail({ project, tasks }: ProjectDetailProps) {
       completed_at: null,
       dropped_reason: null,
       recurrence: newRecurrence || null,
+      reminder_at: null,
+      todo_id: null,
     })
     setNewTitle('')
     setNewPriority('normal')
