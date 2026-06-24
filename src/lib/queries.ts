@@ -461,15 +461,18 @@ export function useThisWeekSales() {
   return useQuery({
     queryKey: ['business', 'sales', 'week', startStr],
     queryFn: async () => {
-      const { data, error } = await businessSupabase
-        .from('sales')
-        .select('*')
-        .gte('date', startStr)
-        .lte('date', endStr)
-        .order('date', { ascending: true })
-      if (error) throw error
-      return data as Sale[]
+      try {
+        const { data, error } = await businessSupabase
+          .from('sales')
+          .select('*')
+          .gte('date', startStr)
+          .lte('date', endStr)
+          .order('date', { ascending: true })
+        if (error) throw error
+        return data as Sale[]
+      } catch { return [] as Sale[] }
     },
+    retry: false,
   })
 }
 
@@ -480,15 +483,18 @@ export function usePreviousWeekSales() {
   return useQuery({
     queryKey: ['business', 'sales', 'prev_week', startStr],
     queryFn: async () => {
-      const { data, error } = await businessSupabase
-        .from('sales')
-        .select('*')
-        .gte('date', startStr)
-        .lte('date', endStr)
-        .order('date', { ascending: true })
-      if (error) throw error
-      return data as Sale[]
+      try {
+        const { data, error } = await businessSupabase
+          .from('sales')
+          .select('*')
+          .gte('date', startStr)
+          .lte('date', endStr)
+          .order('date', { ascending: true })
+        if (error) throw error
+        return data as Sale[]
+      } catch { return [] as Sale[] }
     },
+    retry: false,
   })
 }
 
