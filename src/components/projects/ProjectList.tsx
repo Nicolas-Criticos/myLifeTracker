@@ -12,9 +12,9 @@ interface ProjectListProps {
 const CATEGORIES: Category[] = ['FOUNDATION', 'LEVERAGE', 'EXPRESSION']
 
 const categoryConfig: Record<Category, { label: string; color: string; dot: string }> = {
-  FOUNDATION: { label: 'Wellbeing',  color: 'var(--foundation)', dot: '#5c7a5c' },
-  LEVERAGE:   { label: 'Growth',     color: 'var(--leverage)',   dot: '#4a6b8a' },
-  EXPRESSION: { label: 'Creation',   color: 'var(--expression)', dot: '#8a6a3a' },
+  FOUNDATION: { label: 'Foundation', color: 'var(--foundation)', dot: '#5c7a5c' },
+  LEVERAGE:   { label: 'Leverage',   color: 'var(--leverage)',   dot: '#4a6b8a' },
+  EXPRESSION: { label: 'Expression', color: 'var(--expression)', dot: '#8a6a3a' },
 }
 
 const INPUT: React.CSSProperties = {
