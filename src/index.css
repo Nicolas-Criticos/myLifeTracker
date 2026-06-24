@@ -237,6 +237,52 @@ body {
 /* Selection */
 ::selection { background: rgba(107, 124, 92, 0.2); color: var(--ink); }
 
+/* ── RESPONSIVE / MOBILE ──────────────────────────────────────────────────── */
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Desktop nav: visible >= 768px */
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.desktop-date {
+  display: inline;
+}
+
+.mobile-menu-btn {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .desktop-nav {
+    display: none !important;
+  }
+  .desktop-date {
+    display: none !important;
+  }
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  /* Tighten page padding on mobile */
+  .animate-in {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-top: 24px !important;
+  }
+
+  /* Cards need a bit of breathing room */
+  .card {
+    padding: 16px;
+  }
+}
+
 /* ── Olive Realm ───────────────────────────────────────────────────────────── */
 
 body.olive-realm .samsara-bg {
