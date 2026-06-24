@@ -35,9 +35,9 @@ export interface Task {
   completed_at: string | null
   dropped_reason: string | null
   recurrence: TaskRecurrence | null
-  created_at: string
   reminder_at: string | null
   todo_id: string | null
+  created_at: string
 }
 
 export interface DailyCheckin {

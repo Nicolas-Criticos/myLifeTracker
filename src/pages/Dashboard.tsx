@@ -1,13 +1,11 @@
 import { useNavigate } from 'react-router-dom'
 import WeeklyDashboard from '../components/dashboard/WeeklyDashboard'
 import ReadingList from '../components/dashboard/ReadingList'
-import HighPriorityCallout from '../components/dashboard/HighPriorityCallout'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   return (
     <>
-      <HighPriorityCallout />
       <WeeklyDashboard />
       <ReadingList />
 
