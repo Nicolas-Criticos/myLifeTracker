@@ -468,11 +468,14 @@ export function useThisWeekSales() {
           .gte('date', startStr)
           .lte('date', endStr)
           .order('date', { ascending: true })
-        if (error) throw error
-        return data as Sale[]
-      } catch { return [] as Sale[] }
+        if (error) return [] as Sale[]
+        return (data ?? []) as Sale[]
+      } catch {
+        return [] as Sale[]
+      }
     },
     retry: false,
+    throwOnError: false,
   })
 }
 
@@ -490,11 +493,14 @@ export function usePreviousWeekSales() {
           .gte('date', startStr)
           .lte('date', endStr)
           .order('date', { ascending: true })
-        if (error) throw error
-        return data as Sale[]
-      } catch { return [] as Sale[] }
+        if (error) return [] as Sale[]
+        return (data ?? []) as Sale[]
+      } catch {
+        return [] as Sale[]
+      }
     },
     retry: false,
+    throwOnError: false,
   })
 }
 
