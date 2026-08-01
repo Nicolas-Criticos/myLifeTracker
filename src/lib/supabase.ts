@@ -322,3 +322,12 @@ export interface FinMonthlyEntry {
   notes: string | null
   created_at: string
 }
+
+export interface OpsExpense {
+  id: string
+  amount: number
+  category: 'FOOD' | 'BUSINESS' | 'RUNNING COSTS' | 'LIFESTYLE'
+  description: string
+  date: string
+  created_at: string
+}

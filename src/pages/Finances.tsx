@@ -6,6 +6,7 @@ import {
 import {
   useFinAccounts, useFinEntries, useUpsertFinEntry, useCreateFinAccount,
 } from '../lib/queries'
+import { ExpenseTracker } from '../components/finance/ExpenseTracker'
 
 const LABEL: React.CSSProperties = {
   fontFamily: 'var(--font-body)',
@@ -531,6 +532,8 @@ export default function Finances() {
           </div>
         </div>
       )}
+
+      <ExpenseTracker />
 
     </div>
   )

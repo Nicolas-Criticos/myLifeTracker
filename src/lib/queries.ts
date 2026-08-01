@@ -5,7 +5,7 @@ import { businessSupabase } from './businessSupabase'
 import type {
   Project, Task, DailyCheckin, DailyLog, WeeklyReview, Pattern,
   Product, Expense, Sale, CostComponent, CommunityProject, CommunityTask, Dream,
-  FinAccount, FinMonthlyEntry,
+  FinAccount, FinMonthlyEntry, OpsExpense,
 } from './supabase'
 import { getWeekRange, mondayOfCurrentWeek } from './utils'
 
@@ -811,6 +811,42 @@ export function useCreateFinAccount() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['fin_accounts'] })
+    },
+  })
+}
+
+// ── EXPENSE TRACKER ───────────────────────────────────────────────────────────
+
+export function useOpsExpenses(month: string) {
+  return useQuery({
+    queryKey: ['ops_expenses', month],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ops_expenses')
+        .select('*')
+        .gte('date', `${month}-01`)
+        .lte('date', `${month}-31`)
+        .order('date', { ascending: false })
+      if (error) throw error
+      return data as OpsExpense[]
+    },
+  })
+}
+
+export function useCreateOpsExpense() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (expense: Omit<OpsExpense, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
+        .from('ops_expenses')
+        .insert(expense)
+        .select()
+        .single()
+      if (error) throw error
+      return data as OpsExpense
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ops_expenses'] })
     },
   })
 }
