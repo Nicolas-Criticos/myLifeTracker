@@ -1,439 +1,174 @@
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { format } from 'date-fns'
-import { useOpsExpenses, useCreateOpsExpense, useFinEntries } from '../../lib/queries'
-import type { OpsExpense } from '../../lib/supabase'
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
+import {
+  useCreateOpsExpense,
+  useCreateOpsExpenseCategory,
+  useDeleteOpsExpense,
+  useDeleteOpsExpenseCategory,
+  useFinEntries,
+  useOpsExpenseCategories,
+  useOpsExpenses,
+} from '../../lib/queries'
 
-const CATEGORIES = ['FOOD', 'BUSINESS', 'RUNNING COSTS', 'LIFESTYLE'] as const
-const CATEGORY_COLORS: Record<string, string> = {
-  FOOD: '#8a6a3a',
-  BUSINESS: '#6b5c8a',
-  'RUNNING COSTS': '#5c7a5c',
-  LIFESTYLE: '#8a4a4a',
-}
+const FALLBACK_CATEGORIES = [
+  { id: 'food', name: 'FOOD', color: '#8a6a3a', is_builtin: true },
+  { id: 'business', name: 'BUSINESS', color: '#6b5c8a', is_builtin: true },
+  { id: 'running', name: 'RUNNING COSTS', color: '#5c7a5c', is_builtin: true },
+  { id: 'lifestyle', name: 'LIFESTYLE', color: '#8a4a4a', is_builtin: true },
+]
+const CUSTOM_COLORS = ['#3f7287', '#9a6b55', '#65704d', '#896f91', '#a38345', '#4f7d73']
 
 const LABEL: React.CSSProperties = {
-  fontFamily: 'var(--font-body)',
-  fontSize: '0.62rem',
-  fontWeight: 400,
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase',
-  color: 'var(--ink-muted)',
+  fontFamily: 'var(--font-body)', fontSize: '0.62rem', fontWeight: 400,
+  letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)',
 }
-
 const FIELD_STYLE: React.CSSProperties = {
-  width: '100%',
-  background: 'transparent',
-  border: 'none',
-  borderBottom: '1px solid var(--border)',
-  padding: '8px 0 10px',
-  fontFamily: 'var(--font-body)',
-  fontSize: '0.875rem',
-  fontWeight: 300,
-  color: 'var(--ink)',
-  outline: 'none',
+  width: '100%', background: 'transparent', border: 'none',
+  borderBottom: '1px solid var(--border)', padding: '8px 0 10px',
+  fontFamily: 'var(--font-body)', fontSize: '0.875rem', fontWeight: 300,
+  color: 'var(--ink)', outline: 'none',
+}
+const PILL_BUTTON: React.CSSProperties = {
+  fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: '0.7rem',
+  letterSpacing: '0.1em', textTransform: 'uppercase', borderRadius: 'var(--radius-full)',
+  padding: '9px 18px', cursor: 'pointer', transition: 'all 200ms ease',
 }
 
 export function ExpenseTracker() {
   const today = format(new Date(), 'yyyy-MM')
   const [selectedMonth, setSelectedMonth] = useState(today)
-  const { data: expenses = [], isLoading: loadingExpenses } = useOpsExpenses(selectedMonth)
-  const { data: entries = [] } = useFinEntries()
-  const createExpense = useCreateOpsExpense()
-
-  // Quick-add form
+  const [showLog, setShowLog] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [showCategories, setShowCategories] = useState(false)
   const [formDate, setFormDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [formAmount, setFormAmount] = useState('')
-  const [formCategory, setFormCategory] = useState<string>('FOOD')
+  const [formCategory, setFormCategory] = useState('FOOD')
   const [formDescription, setFormDescription] = useState('')
+  const [newCategory, setNewCategory] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
-  // Income: sum of personal + business fin_monthly_entries for selected month
-  const income = useMemo(() => {
-    return entries
-      .filter(e => e.month === selectedMonth)
-      .reduce((sum, e) => sum + Number(e.amount_zar), 0)
-  }, [entries, selectedMonth])
+  const { data: expenses = [], isLoading } = useOpsExpenses(selectedMonth)
+  const { data: entries = [] } = useFinEntries()
+  const { data: savedCategories } = useOpsExpenseCategories()
+  const createExpense = useCreateOpsExpense()
+  const deleteExpense = useDeleteOpsExpense()
+  const createCategory = useCreateOpsExpenseCategory()
+  const deleteCategory = useDeleteOpsExpenseCategory()
 
-  // Total expenses for the month
-  const totalExpenses = useMemo(() => {
-    return expenses.reduce((sum, e) => sum + Number(e.amount), 0)
-  }, [expenses])
-
-  // Group expenses by category, sorted by amount desc
+  // Keep the page usable while the category migration is being deployed.
+  const categories = savedCategories?.length ? savedCategories : FALLBACK_CATEGORIES
+  const colorFor = (name: string) => categories.find(c => c.name === name)?.color || '#77756f'
+  const totalExpenses = useMemo(() => expenses.reduce((sum, e) => sum + Number(e.amount), 0), [expenses])
+  const income = useMemo(() => entries.filter(e => e.month === selectedMonth)
+    .reduce((sum, e) => sum + Number(e.amount_zar), 0), [entries, selectedMonth])
   const categoryTotals = useMemo(() => {
-    const map: Record<string, number> = {}
-    expenses.forEach(e => {
-      map[e.category] = (map[e.category] || 0) + Number(e.amount)
-    })
-    return Object.entries(map)
-      .sort((a, b) => b[1] - a[1])
-      .map(([category, amount]) => ({ category, amount }))
-  }, [expenses])
+    const totals = new Map<string, number>()
+    expenses.forEach(e => totals.set(e.category, (totals.get(e.category) || 0) + Number(e.amount)))
+    return [...totals].map(([category, amount]) => ({ category, amount, percentage: totalExpenses ? amount / totalExpenses * 100 : 0 }))
+      .sort((a, b) => b.amount - a.amount)
+  }, [expenses, totalExpenses])
 
-  // Ratio
-  const ratio = income > 0 ? (totalExpenses / income) * 100 : 0
-
-  async function handleAddExpense(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleAddExpense(event: React.FormEvent) {
+    event.preventDefault()
     if (!formAmount || !formDescription.trim()) return
-    setSubmitting(true)
+    setSubmitting(true); setErrorMessage('')
     try {
-      await createExpense.mutateAsync({
-        amount: Number(formAmount),
-        category: formCategory as OpsExpense['category'],
-        description: formDescription.trim(),
-        date: formDate,
-      })
-      setFormAmount('')
-      setFormDescription('')
-      setFormDate(format(new Date(), 'yyyy-MM-dd'))
-      setFormCategory('FOOD')
-      setShowForm(false)
-      setSubmitted(true)
-      setTimeout(() => setSubmitted(false), 2000)
-    } finally {
-      setSubmitting(false)
+      await createExpense.mutateAsync({ amount: Number(formAmount), category: formCategory, description: formDescription.trim(), date: formDate })
+      setFormAmount(''); setFormDescription(''); setShowForm(false)
+    } catch (error) { setErrorMessage(error instanceof Error ? error.message : 'Could not save expense.') }
+    finally { setSubmitting(false) }
+  }
+
+  async function handleDeleteExpense(id: string, description: string) {
+    if (!window.confirm(`Delete “${description}”? This cannot be undone.`)) return
+    try { await deleteExpense.mutateAsync(id) }
+    catch (error) { setErrorMessage(error instanceof Error ? error.message : 'Could not delete expense.') }
+  }
+
+  async function handleAddCategory(event: React.FormEvent) {
+    event.preventDefault()
+    const name = newCategory.trim().toUpperCase()
+    if (!name) return
+    setErrorMessage('')
+    try {
+      const created = await createCategory.mutateAsync({ name, color: CUSTOM_COLORS[categories.length % CUSTOM_COLORS.length] })
+      setFormCategory(created.name); setNewCategory('')
+    } catch (error) { setErrorMessage(error instanceof Error ? error.message : 'Could not create category.') }
+  }
+
+  async function handleDeleteCategory(id: string, name: string) {
+    if (expenses.some(e => e.category === name)) {
+      setErrorMessage(`“${name}” is used by an expense in this month. Reassign or delete those expenses first.`)
+      return
     }
+    if (!window.confirm(`Remove the category “${name}”? Historical expenses in other months will keep their label.`)) return
+    try {
+      await deleteCategory.mutateAsync(id)
+      if (formCategory === name) setFormCategory('FOOD')
+    } catch (error) { setErrorMessage(error instanceof Error ? error.message : 'Could not remove category.') }
   }
 
   return (
-    <div className="card" style={{ padding: '28px 32px', marginBottom: '0' }}>
-      {/* Section header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-        <div>
-          <p style={{ ...LABEL, marginBottom: '4px' }}>Expense Tracker</p>
-          <p style={{
-            fontFamily: 'var(--font-body)',
-            fontWeight: 300,
-            fontSize: '0.72rem',
-            color: 'var(--ink-muted)',
-          }}>
-            Spending vs income by category
-          </p>
-        </div>
-        <input
-          type="month"
-          value={selectedMonth}
-          onChange={e => setSelectedMonth(e.target.value)}
-          style={{
-            ...FIELD_STYLE,
-            width: 'auto',
-            minWidth: '140px',
-            fontSize: '0.78rem',
-          }}
-        />
+    <div className="card" style={{ padding: '28px 32px', marginBottom: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', marginBottom: 24 }}>
+        <div><p style={{ ...LABEL, marginBottom: 4 }}>Expense Tracker</p><p style={{ fontSize: '0.72rem', color: 'var(--ink-muted)' }}>Spending by category</p></div>
+        <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} style={{ ...FIELD_STYLE, width: 'auto', minWidth: 140, fontSize: '0.78rem' }} />
       </div>
 
-      {loadingExpenses ? (
-        <p style={{
-          fontFamily: 'var(--font-body)',
-          fontWeight: 300,
-          fontSize: '0.82rem',
-          color: 'var(--ink-muted)',
-          fontStyle: 'italic',
-          textAlign: 'center',
-          padding: '20px 0',
-        }}>
-          Loading…
-        </p>
-      ) : expenses.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '32px 0' }}>
-          <p style={{
-            fontFamily: 'var(--font-body)',
-            fontWeight: 300,
-            fontSize: '0.95rem',
-            color: 'var(--ink-muted)',
-            fontStyle: 'italic',
-            lineHeight: 1.6,
-          }}>
-            No expenses logged this month. Add your first below.
-          </p>
-        </div>
+      {errorMessage && <div style={{ color: 'var(--clay)', fontSize: '0.78rem', marginBottom: 16 }}>{errorMessage}</div>}
+      {isLoading ? <p style={{ textAlign: 'center', color: 'var(--ink-muted)', padding: 24 }}>Loading…</p> : expenses.length === 0 ? (
+        <p style={{ textAlign: 'center', color: 'var(--ink-muted)', fontStyle: 'italic', padding: '28px 0' }}>No expenses logged this month.</p>
       ) : (
-        <>
-          {/* Bars */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-            {/* Income bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '0.68rem',
-                fontWeight: 300,
-                color: 'var(--ink-muted)',
-                width: '56px',
-                flexShrink: 0,
-                textAlign: 'right',
-              }}>
-                Income
-              </span>
-              <div style={{
-                flex: 1,
-                height: '22px',
-                background: 'rgba(44,42,37,0.06)',
-                borderRadius: 'var(--radius-full)',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  width: '100%',
-                  height: '100%',
-                  background: 'rgba(44,42,37,0.15)',
-                  borderRadius: 'var(--radius-full)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  paddingLeft: '12px',
-                }}>
-                  <span style={{
-                    fontFamily: 'var(--font-display)',
-                    fontSize: '0.7rem',
-                    fontWeight: 300,
-                    color: 'var(--ink)',
-                  }}>
-                    R {income.toLocaleString('en-ZA', { maximumFractionDigits: 0 })} income
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Expenses bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: '0.68rem',
-                fontWeight: 300,
-                color: 'var(--ink-muted)',
-                width: '56px',
-                flexShrink: 0,
-                textAlign: 'right',
-              }}>
-                Expenses
-              </span>
-              <div style={{
-                flex: 1,
-                height: '22px',
-                background: 'rgba(44,42,37,0.04)',
-                borderRadius: 'var(--radius-full)',
-                overflow: 'hidden',
-                display: 'flex',
-              }}>
-                {categoryTotals.map(({ category, amount }) => {
-                  const pct = income > 0 ? (amount / income) * 100 : (totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0)
-                  return (
-                    <div
-                      key={category}
-                      style={{
-                        width: `${Math.max(pct, 2)}%`,
-                        height: '100%',
-                        background: CATEGORY_COLORS[category] || 'var(--ink-muted)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        overflow: 'hidden',
-                      }}
-                      title={`${category}: R ${amount.toLocaleString('en-ZA', { maximumFractionDigits: 0 })}`}
-                    >
-                      {pct > 6 && (
-                        <span style={{
-                          fontFamily: 'var(--font-body)',
-                          fontSize: '0.58rem',
-                          fontWeight: 400,
-                          color: '#fff',
-                          whiteSpace: 'nowrap',
-                        }}>
-                          {category} R{amount.toLocaleString('en-ZA', { maximumFractionDigits: 0 })}
-                        </span>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(180px, 0.8fr) minmax(220px, 1.2fr)', gap: 28, alignItems: 'center', marginBottom: 22 }}>
+          {/* Recharts provides an accessible, responsive donut without custom SVG geometry. */}
+          <div style={{ height: 210, position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={categoryTotals} dataKey="amount" nameKey="category" innerRadius={53} outerRadius={84} paddingAngle={2}>
+              {categoryTotals.map(item => <Cell key={item.category} fill={colorFor(item.category)} />)}
+            </Pie><Tooltip formatter={(value: number) => `R ${Number(value).toLocaleString('en-ZA', { maximumFractionDigits: 2 })}`} /></PieChart></ResponsiveContainer>
+            <div style={{ position: 'absolute', inset: 0, display: 'grid', placeContent: 'center', textAlign: 'center', pointerEvents: 'none' }}>
+              <span style={LABEL}>Total</span><strong style={{ fontFamily: 'var(--font-display)', fontWeight: 400 }}>R {totalExpenses.toLocaleString('en-ZA')}</strong>
             </div>
           </div>
-
-          {/* Ratio text */}
-          <p style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: '0.75rem',
-            fontWeight: 300,
-            color: 'var(--ink-muted)',
-            textAlign: 'center',
-            marginBottom: '20px',
-          }}>
-            Expenses are {ratio.toFixed(0)}% of income
-            {ratio > 100 && (
-              <span style={{ color: 'var(--clay)', marginLeft: '4px' }}>⚠ Overspent</span>
-            )}
-          </p>
-        </>
-      )}
-
-      {/* Expense list (when there are expenses) */}
-      {expenses.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-body)' }}>
-            <thead>
-              <tr>
-                <th style={{ ...LABEL, textAlign: 'left', padding: '8px 12px 8px 0', borderBottom: '1px solid var(--border)' }}>Date</th>
-                <th style={{ ...LABEL, textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>Category</th>
-                <th style={{ ...LABEL, textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid var(--border)' }}>Description</th>
-                <th style={{ ...LABEL, textAlign: 'right', padding: '8px 0 8px 12px', borderBottom: '1px solid var(--border)' }}>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {expenses.map((e) => (
-                <tr key={e.id}>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: '0.78rem', fontWeight: 300, color: 'var(--ink)', borderBottom: '1px solid var(--border)' }}>
-                    {format(new Date(e.date + 'T00:00:00'), 'dd MMM yyyy')}
-                  </td>
-                  <td style={{ padding: '8px 12px', fontSize: '0.78rem', fontWeight: 300, color: 'var(--ink)', borderBottom: '1px solid var(--border)' }}>
-                    <span style={{
-                      display: 'inline-block',
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: CATEGORY_COLORS[e.category] || 'var(--ink-muted)',
-                      marginRight: '6px',
-                      verticalAlign: 'middle',
-                    }} />
-                    {e.category}
-                  </td>
-                  <td style={{ padding: '8px 12px', fontSize: '0.78rem', fontWeight: 300, color: 'var(--ink)', borderBottom: '1px solid var(--border)' }}>
-                    {e.description}
-                  </td>
-                  <td style={{ padding: '8px 0 8px 12px', fontSize: '0.82rem', fontWeight: 300, color: 'var(--ink)', textAlign: 'right', fontFamily: 'var(--font-display)', borderBottom: '1px solid var(--border)' }}>
-                    R {Number(e.amount).toLocaleString('en-ZA', { maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div>{categoryTotals.map(item => <div key={item.category} style={{ display: 'grid', gridTemplateColumns: '12px 1fr auto', gap: 9, alignItems: 'center', padding: '6px 0' }}>
+            <span style={{ width: 9, height: 9, borderRadius: '50%', background: colorFor(item.category) }} />
+            <span style={{ fontSize: '0.76rem' }}>{item.category}</span>
+            <span style={{ fontSize: '0.76rem', color: 'var(--ink-muted)' }}>{item.percentage.toFixed(1)}% · R {item.amount.toLocaleString('en-ZA')}</span>
+          </div>)}</div>
         </div>
       )}
 
-      {/* Quick-add form */}
-      <div style={{ borderTop: expenses.length > 0 ? '1px solid var(--border)' : 'none', paddingTop: expenses.length > 0 ? '16px' : '0' }}>
-        {!showForm ? (
-          <button
-            type="button"
-            onClick={() => setShowForm(true)}
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontWeight: 400,
-              fontSize: '0.75rem',
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: '#fff',
-              background: submitted ? 'var(--foundation)' : 'var(--ink)',
-              border: 'none',
-              borderRadius: 'var(--radius-full)',
-              padding: '12px 28px',
-              cursor: 'pointer',
-              transition: 'all 200ms ease',
-            }}
-          >
-            {submitted ? '✓ Added' : '+ Add expense'}
-          </button>
-        ) : (
-          <form onSubmit={handleAddExpense} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 120px' }}>
-                <label style={{ ...LABEL, display: 'block', marginBottom: '4px' }}>Date</label>
-                <input
-                  type="date"
-                  value={formDate}
-                  onChange={e => setFormDate(e.target.value)}
-                  style={FIELD_STYLE}
-                  required
-                />
-              </div>
-              <div style={{ flex: '1 1 120px' }}>
-                <label style={{ ...LABEL, display: 'block', marginBottom: '4px' }}>Amount (R)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={formAmount}
-                  onChange={e => setFormAmount(e.target.value)}
-                  style={FIELD_STYLE}
-                  required
-                />
-              </div>
-              <div style={{ flex: '1 1 140px' }}>
-                <label style={{ ...LABEL, display: 'block', marginBottom: '4px' }}>Category</label>
-                <select
-                  value={formCategory}
-                  onChange={e => setFormCategory(e.target.value)}
-                  style={{
-                    ...FIELD_STYLE,
-                    appearance: 'none',
-                    WebkitAppearance: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {CATEGORIES.map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div>
-              <label style={{ ...LABEL, display: 'block', marginBottom: '4px' }}>Description</label>
-              <input
-                type="text"
-                placeholder="e.g. groceries, petrol, rent"
-                value={formDescription}
-                onChange={e => setFormDescription(e.target.value)}
-                style={FIELD_STYLE}
-                required
-              />
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button
-                type="submit"
-                disabled={submitting}
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 400,
-                  fontSize: '0.75rem',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: '#fff',
-                  background: 'var(--ink)',
-                  border: 'none',
-                  borderRadius: 'var(--radius-full)',
-                  padding: '10px 24px',
-                  cursor: submitting ? 'wait' : 'pointer',
-                  opacity: submitting ? 0.6 : 1,
-                  transition: 'all 200ms ease',
-                }}
-              >
-                {submitting ? 'Saving…' : 'Save expense'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 400,
-                  fontSize: '0.75rem',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  color: 'var(--ink-muted)',
-                  background: 'transparent',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-full)',
-                  padding: '10px 24px',
-                  cursor: 'pointer',
-                  transition: 'all 200ms ease',
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
+      <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button type="button" onClick={() => setShowForm(v => !v)} style={{ ...PILL_BUTTON, color: '#fff', background: 'var(--ink)', border: 'none' }}>{showForm ? 'Close form' : '+ Add expense'}</button>
+        <button type="button" onClick={() => setShowLog(v => !v)} style={{ ...PILL_BUTTON, color: 'var(--ink)', background: 'transparent', border: '1px solid var(--border)' }}>{showLog ? 'Hide expense log' : `Show expense log (${expenses.length})`}</button>
+        <button type="button" onClick={() => setShowCategories(v => !v)} style={{ ...PILL_BUTTON, color: 'var(--ink)', background: 'transparent', border: '1px solid var(--border)' }}>{showCategories ? 'Close categories' : 'Manage categories'}</button>
       </div>
+
+      {showForm && <form onSubmit={handleAddExpense} style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <label style={{ flex: '1 1 120px', ...LABEL }}>Date<input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} style={FIELD_STYLE} required /></label>
+          <label style={{ flex: '1 1 120px', ...LABEL }}>Amount (R)<input type="number" min="0.01" step="0.01" value={formAmount} onChange={e => setFormAmount(e.target.value)} style={FIELD_STYLE} required /></label>
+          <label style={{ flex: '1 1 150px', ...LABEL }}>Category<select value={formCategory} onChange={e => setFormCategory(e.target.value)} style={FIELD_STYLE}>{categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select></label>
+        </div>
+        <label style={LABEL}>Description<input value={formDescription} onChange={e => setFormDescription(e.target.value)} style={FIELD_STYLE} required /></label>
+        <button disabled={submitting} style={{ ...PILL_BUTTON, alignSelf: 'flex-start', color: '#fff', background: 'var(--ink)', border: 'none' }}>{submitting ? 'Saving…' : 'Save expense'}</button>
+      </form>}
+
+      {showCategories && <div style={{ marginTop: 20, padding: 18, background: 'rgba(44,42,37,0.035)', borderRadius: 'var(--radius-md)' }}>
+        <p style={{ ...LABEL, marginBottom: 12 }}>Expense categories</p>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>{categories.map(c => <span key={c.id} style={{ border: '1px solid var(--border)', borderRadius: 20, padding: '6px 10px', fontSize: '0.72rem' }}><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 8, background: c.color, marginRight: 6 }} />{c.name}{!c.is_builtin && <button type="button" aria-label={`Remove ${c.name}`} onClick={() => handleDeleteCategory(c.id, c.name)} style={{ border: 0, background: 'transparent', cursor: 'pointer', color: 'var(--clay)', marginLeft: 7 }}>×</button>}</span>)}</div>
+        <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: 10, alignItems: 'end' }}><label style={{ ...LABEL, flex: 1 }}>New category<input maxLength={40} value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="e.g. TRAVEL" style={FIELD_STYLE} /></label><button style={{ ...PILL_BUTTON, color: '#fff', background: 'var(--ink)', border: 0 }}>Add</button></form>
+      </div>}
+
+      {showLog && expenses.length > 0 && <div style={{ marginTop: 22, overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 620 }}><thead><tr>{['Date', 'Category', 'Description', 'Amount', ''].map((h, i) => <th key={i} style={{ ...LABEL, textAlign: i === 3 ? 'right' : 'left', padding: '8px 10px', borderBottom: '1px solid var(--border)' }}>{h}</th>)}</tr></thead>
+          <tbody>{expenses.map(e => <tr key={e.id}><td style={cellStyle}>{format(new Date(`${e.date}T00:00:00`), 'dd MMM yyyy')}</td><td style={cellStyle}><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 8, background: colorFor(e.category), marginRight: 6 }} />{e.category}</td><td style={cellStyle}>{e.description}</td><td style={{ ...cellStyle, textAlign: 'right' }}>R {Number(e.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</td><td style={cellStyle}><button type="button" onClick={() => handleDeleteExpense(e.id, e.description)} aria-label={`Delete ${e.description}`} style={{ border: 0, background: 'transparent', color: 'var(--clay)', cursor: 'pointer' }}>Delete</button></td></tr>)}</tbody>
+        </table>
+      </div>}
+      {income > 0 && <p style={{ textAlign: 'center', color: 'var(--ink-muted)', fontSize: '0.72rem', marginTop: 18 }}>Expenses are {((totalExpenses / income) * 100).toFixed(0)}% of income.</p>}
     </div>
   )
 }
+
+const cellStyle: React.CSSProperties = { padding: '9px 10px', fontFamily: 'var(--font-body)', fontSize: '0.78rem', fontWeight: 300, borderBottom: '1px solid var(--border)' }

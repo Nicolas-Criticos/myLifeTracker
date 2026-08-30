@@ -5,7 +5,7 @@ import { businessSupabase } from './businessSupabase'
 import type {
   Project, Task, DailyCheckin, DailyLog, WeeklyReview, Pattern,
   Product, Expense, Sale, CostComponent, CommunityProject, CommunityTask, Dream,
-  FinAccount, FinMonthlyEntry, OpsExpense,
+  FinAccount, FinMonthlyEntry, OpsExpense, OpsExpenseCategory,
 } from './supabase'
 import { getWeekRange, mondayOfCurrentWeek } from './utils'
 
@@ -848,5 +848,56 @@ export function useCreateOpsExpense() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['ops_expenses'] })
     },
+  })
+}
+
+
+/** Delete one expense and refresh every currently visible month. */
+export function useDeleteOpsExpense() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('ops_expenses').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ops_expenses'] }),
+  })
+}
+
+/** User-managed category list, with seeded categories returned first. */
+export function useOpsExpenseCategories() {
+  return useQuery({
+    queryKey: ['ops_expense_categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ops_expense_categories').select('*')
+        .order('is_builtin', { ascending: false }).order('created_at', { ascending: true })
+      if (error) throw error
+      return data as OpsExpenseCategory[]
+    },
+  })
+}
+
+export function useCreateOpsExpenseCategory() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (category: Pick<OpsExpenseCategory, 'name' | 'color'>) => {
+      const { data, error } = await supabase.from('ops_expense_categories')
+        .insert({ ...category, is_builtin: false }).select().single()
+      if (error) throw error
+      return data as OpsExpenseCategory
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ops_expense_categories'] }),
+  })
+}
+
+export function useDeleteOpsExpenseCategory() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('ops_expense_categories').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ops_expense_categories'] }),
   })
 }

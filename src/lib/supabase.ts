@@ -326,8 +326,17 @@ export interface FinMonthlyEntry {
 export interface OpsExpense {
   id: string
   amount: number
-  category: 'FOOD' | 'BUSINESS' | 'RUNNING COSTS' | 'LIFESTYLE'
+  // Categories are user-managed rather than limited to the seeded defaults.
+  category: string
   description: string
   date: string
+  created_at: string
+}
+
+export interface OpsExpenseCategory {
+  id: string
+  name: string
+  color: string
+  is_builtin: boolean
   created_at: string
 }
