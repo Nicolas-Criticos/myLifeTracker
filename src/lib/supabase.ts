@@ -328,6 +328,7 @@ export interface OpsExpense {
   amount: number
   // Categories are user-managed rather than limited to the seeded defaults.
   category: string
+  account_type: 'personal' | 'business'
   description: string
   date: string
   created_at: string

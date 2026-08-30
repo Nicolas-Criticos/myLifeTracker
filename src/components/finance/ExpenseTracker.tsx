@@ -41,9 +41,13 @@ export function ExpenseTracker() {
   const [showLog, setShowLog] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [showCategories, setShowCategories] = useState(false)
+  // The account tab only filters the log; summaries intentionally use all expenses.
+  const [logAccount, setLogAccount] = useState<'personal' | 'business'>('personal')
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [formDate, setFormDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [formAmount, setFormAmount] = useState('')
   const [formCategory, setFormCategory] = useState('FOOD')
+  const [formAccount, setFormAccount] = useState<'personal' | 'business'>('personal')
   const [formDescription, setFormDescription] = useState('')
   const [newCategory, setNewCategory] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -69,13 +73,17 @@ export function ExpenseTracker() {
     return [...totals].map(([category, amount]) => ({ category, amount, percentage: totalExpenses ? amount / totalExpenses * 100 : 0 }))
       .sort((a, b) => b.amount - a.amount)
   }, [expenses, totalExpenses])
+  const logExpenses = useMemo(
+    () => expenses.filter(expense => (expense.account_type || 'personal') === logAccount),
+    [expenses, logAccount],
+  )
 
   async function handleAddExpense(event: React.FormEvent) {
     event.preventDefault()
     if (!formAmount || !formDescription.trim()) return
     setSubmitting(true); setErrorMessage('')
     try {
-      await createExpense.mutateAsync({ amount: Number(formAmount), category: formCategory, description: formDescription.trim(), date: formDate })
+      await createExpense.mutateAsync({ amount: Number(formAmount), category: formCategory, account_type: formAccount, description: formDescription.trim(), date: formDate })
       setFormAmount(''); setFormDescription(''); setShowForm(false)
     } catch (error) { setErrorMessage(error instanceof Error ? error.message : 'Could not save expense.') }
     finally { setSubmitting(false) }
@@ -125,17 +133,24 @@ export function ExpenseTracker() {
           {/* Recharts provides an accessible, responsive donut without custom SVG geometry. */}
           <div style={{ height: 210, position: 'relative' }}>
             <ResponsiveContainer width="100%" height="100%"><PieChart><Pie data={categoryTotals} dataKey="amount" nameKey="category" innerRadius={53} outerRadius={84} paddingAngle={2}>
-              {categoryTotals.map(item => <Cell key={item.category} fill={colorFor(item.category)} />)}
+              {categoryTotals.map(item => {
+                const selected = activeCategory === item.category
+                const dimmed = activeCategory !== null && !selected
+                return <Cell key={item.category} fill={colorFor(item.category)} opacity={dimmed ? 0.2 : 1} stroke={selected ? '#fffdf7' : 'transparent'} strokeWidth={selected ? 5 : 0} style={{ filter: selected ? `drop-shadow(0 0 6px ${colorFor(item.category)})` : undefined, transition: 'opacity 180ms ease' }} />
+              })}
             </Pie><Tooltip formatter={(value: number) => `R ${Number(value).toLocaleString('en-ZA', { maximumFractionDigits: 2 })}`} /></PieChart></ResponsiveContainer>
             <div style={{ position: 'absolute', inset: 0, display: 'grid', placeContent: 'center', textAlign: 'center', pointerEvents: 'none' }}>
               <span style={LABEL}>Total</span><strong style={{ fontFamily: 'var(--font-display)', fontWeight: 400 }}>R {totalExpenses.toLocaleString('en-ZA')}</strong>
             </div>
           </div>
-          <div>{categoryTotals.map(item => <div key={item.category} style={{ display: 'grid', gridTemplateColumns: '12px 1fr auto', gap: 9, alignItems: 'center', padding: '6px 0' }}>
-            <span style={{ width: 9, height: 9, borderRadius: '50%', background: colorFor(item.category) }} />
-            <span style={{ fontSize: '0.76rem' }}>{item.category}</span>
-            <span style={{ fontSize: '0.76rem', color: 'var(--ink-muted)' }}>{item.percentage.toFixed(1)}% · R {item.amount.toLocaleString('en-ZA')}</span>
-          </div>)}</div>
+          <div>{categoryTotals.map(item => {
+            const selected = activeCategory === item.category
+            return <button type="button" key={item.category} onClick={() => setActiveCategory(selected ? null : item.category)} aria-pressed={selected} style={{ width: '100%', display: 'grid', gridTemplateColumns: '12px 1fr auto', gap: 9, alignItems: 'center', padding: '8px 10px', border: selected ? `1px solid ${colorFor(item.category)}` : '1px solid transparent', borderRadius: 8, background: selected ? `${colorFor(item.category)}18` : 'transparent', cursor: 'pointer', textAlign: 'left', transition: 'all 180ms ease' }}>
+              <span style={{ width: 9, height: 9, borderRadius: '50%', background: colorFor(item.category), boxShadow: selected ? `0 0 7px ${colorFor(item.category)}` : 'none' }} />
+              <span style={{ fontSize: '0.76rem', color: 'var(--ink)' }}>{item.category}</span>
+              <span style={{ fontSize: '0.76rem', color: 'var(--ink-muted)' }}>{item.percentage.toFixed(1)}% · R {item.amount.toLocaleString('en-ZA')}</span>
+            </button>
+          })}</div>
         </div>
       )}
 
@@ -150,6 +165,7 @@ export function ExpenseTracker() {
           <label style={{ flex: '1 1 120px', ...LABEL }}>Date<input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} style={FIELD_STYLE} required /></label>
           <label style={{ flex: '1 1 120px', ...LABEL }}>Amount (R)<input type="number" min="0.01" step="0.01" value={formAmount} onChange={e => setFormAmount(e.target.value)} style={FIELD_STYLE} required /></label>
           <label style={{ flex: '1 1 150px', ...LABEL }}>Category<select value={formCategory} onChange={e => setFormCategory(e.target.value)} style={FIELD_STYLE}>{categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select></label>
+          <label style={{ flex: '1 1 140px', ...LABEL }}>Account<select value={formAccount} onChange={e => setFormAccount(e.target.value as 'personal' | 'business')} style={FIELD_STYLE}><option value="personal">Personal</option><option value="business">Business</option></select></label>
         </div>
         <label style={LABEL}>Description<input value={formDescription} onChange={e => setFormDescription(e.target.value)} style={FIELD_STYLE} required /></label>
         <button disabled={submitting} style={{ ...PILL_BUTTON, alignSelf: 'flex-start', color: '#fff', background: 'var(--ink)', border: 'none' }}>{submitting ? 'Saving…' : 'Save expense'}</button>
@@ -161,10 +177,19 @@ export function ExpenseTracker() {
         <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: 10, alignItems: 'end' }}><label style={{ ...LABEL, flex: 1 }}>New category<input maxLength={40} value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="e.g. TRAVEL" style={FIELD_STYLE} /></label><button style={{ ...PILL_BUTTON, color: '#fff', background: 'var(--ink)', border: 0 }}>Add</button></form>
       </div>}
 
-      {showLog && expenses.length > 0 && <div style={{ marginTop: 22, overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 620 }}><thead><tr>{['Date', 'Category', 'Description', 'Amount', ''].map((h, i) => <th key={i} style={{ ...LABEL, textAlign: i === 3 ? 'right' : 'left', padding: '8px 10px', borderBottom: '1px solid var(--border)' }}>{h}</th>)}</tr></thead>
-          <tbody>{expenses.map(e => <tr key={e.id}><td style={cellStyle}>{format(new Date(`${e.date}T00:00:00`), 'dd MMM yyyy')}</td><td style={cellStyle}><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 8, background: colorFor(e.category), marginRight: 6 }} />{e.category}</td><td style={cellStyle}>{e.description}</td><td style={{ ...cellStyle, textAlign: 'right' }}>R {Number(e.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</td><td style={cellStyle}><button type="button" onClick={() => handleDeleteExpense(e.id, e.description)} aria-label={`Delete ${e.description}`} style={{ border: 0, background: 'transparent', color: 'var(--clay)', cursor: 'pointer' }}>Delete</button></td></tr>)}</tbody>
-        </table>
+      {showLog && expenses.length > 0 && <div style={{ marginTop: 22 }}>
+        <div role="tablist" aria-label="Expense account" style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+          {(['personal', 'business'] as const).map(account => {
+            const count = expenses.filter(expense => (expense.account_type || 'personal') === account).length
+            const selected = logAccount === account
+            return <button type="button" role="tab" aria-selected={selected} key={account} onClick={() => setLogAccount(account)} style={{ ...PILL_BUTTON, color: selected ? '#fff' : 'var(--ink)', background: selected ? 'var(--ink)' : 'transparent', border: '1px solid var(--border)' }}>{account} ({count})</button>
+          })}
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          {logExpenses.length === 0 ? <p style={{ color: 'var(--ink-muted)', fontSize: '0.78rem', fontStyle: 'italic', padding: '14px 0' }}>No {logAccount} expenses this month.</p> : <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 620 }}><thead><tr>{['Date', 'Category', 'Description', 'Amount', ''].map((h, i) => <th key={i} style={{ ...LABEL, textAlign: i === 3 ? 'right' : 'left', padding: '8px 10px', borderBottom: '1px solid var(--border)' }}>{h}</th>)}</tr></thead>
+            <tbody>{logExpenses.map(e => <tr key={e.id}><td style={cellStyle}>{format(new Date(`${e.date}T00:00:00`), 'dd MMM yyyy')}</td><td style={cellStyle}><i style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 8, background: colorFor(e.category), marginRight: 6 }} />{e.category}</td><td style={cellStyle}>{e.description}</td><td style={{ ...cellStyle, textAlign: 'right' }}>R {Number(e.amount).toLocaleString('en-ZA', { minimumFractionDigits: 2 })}</td><td style={cellStyle}><button type="button" onClick={() => handleDeleteExpense(e.id, e.description)} aria-label={`Delete ${e.description}`} style={{ border: 0, background: 'transparent', color: 'var(--clay)', cursor: 'pointer' }}>Delete</button></td></tr>)}</tbody>
+          </table>}
+        </div>
       </div>}
       {income > 0 && <p style={{ textAlign: 'center', color: 'var(--ink-muted)', fontSize: '0.72rem', marginTop: 18 }}>Expenses are {((totalExpenses / income) * 100).toFixed(0)}% of income.</p>}
     </div>
